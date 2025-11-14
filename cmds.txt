@@ -1,0 +1,10 @@
+# Start the Monero daemon in Stagenet mode
+./monerod --stagenet
+
+# Start the Monero wallet CLI in Stagenet mode
+./monero-wallet-cli --stagenet
+
+# export to .raw file
+./monero-blockchain-export --stagenet
+
+
