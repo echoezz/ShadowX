@@ -18,3 +18,14 @@
 ** No. of Transaction Confirmation = The difference between current block height and block height of the block containing our transaction
 
 
+### Data in a Block
+- Each block in blockchain contains the info on: Timestamp, Block size, Transaction count, Miner behaviour (Miner reward, Effort, Mining trends)
+
+** Miner reward - Reward miner receives for mining the block
+** Effort - How much computational work (hashing power) the miner needed to locate the block
+** Mining trends - Patterns in miner's behavior such as address reuse, hash rate changes
+
+### Analysing .raw file
+- Contains block in a sequential order
+- Each block consists of block size field, block data (transactions, timestamp, miner reward etc.)
+- It is better not to analyse the .raw file directly due to the complexity of the 
