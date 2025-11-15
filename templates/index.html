@@ -401,58 +401,33 @@
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
 
+                    <!-- Progress Bar -->
+                    <div class="progress" id="progressContainer">
+                        <div class="progress-bar" id="progressBar">0%</div>
+                    </div>
+
+                    <!-- Success and Error Messages -->
+                    <div id="successMessage">File uploaded successfully!</div>
+                    <div id="errorMessage"></div>
+                    <br>
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
                         
-                        <!-- File Upload Form -->
-                        <!-- <form id="uploadForm" enctype="multipart/form-data" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <label for="rawFile" class="text-white-50" style="cursor: pointer;">
-                                <i class="fas fa-upload fa-sm"></i> Upload
-                            </label>
-                            <input type="file" id="rawFile" name="file" style="display: none;" />
-                            <button type="submit" class="btn btn-sm btn-primary shadow-sm">Submit</button>
-                        </form> -->
-                        <!-- <form id="uploadForm" enctype="multipart/form-data" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <label for="rawFile" class="text-white-50" style="cursor: pointer;">
-                                <i class="fas fa-upload"></i> Upload Monero raw file
-                            </label>
-                            <input type="file" id="rawFile" name="file" style="display: none;">
-                            <button type="submit" class="btn btn-sm btn-primary shadow-sm">Submit</button>
-                        </form> -->
-
-                        <!-- Progress Bar -->
-                        <!-- <div class="progress mt-2" style="display: none;" id="progressContainer">
-                            <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;" aria-valuenow="0"
-                                aria-valuemin="0" aria-valuemax="100">0%
-                            </div>
-                        </div> -->
-
-                        <!-- Success Message -->
-                        <!-- <div id="successMessage" style="display: none; color: green; margin-top: 10px;">
-                            File uploaded successfully!
-                        </div> -->
-                        
-                        <form id="uploadForm" enctype="multipart/form-data">
+                        <form id="uploadForm" enctype="multipart/form-data" style="cursor: pointer;">
                             <label for="fileInput" class="btn btn-primary">
                                 <i class="fas fa-upload"></i> Upload Monero raw file
                             </label>
                              <!-- Hidden file input -->
-                            <input type="file" id="fileInput" name="file" style="display: none;" onchange="updateFileName()">
+                            <input type="file" id="fileInput" name="file" style="display: none;" onchange="autoSubmit()">
                             <!-- Display selected file name -->
+                            <br>
                             <span id="fileName" style="margin-left: 10px; font-size: 14px; color: gray;">No file chosen</span>
                             <!-- Submit button -->
-                            <button type="submit" class="btn btn-success" style="margin-top: 10px;">Submit</button>
+                            <!-- <button type="submit" class="btn btn-success" style="margin-top: 10px;">Submit</button> -->
                         </form>
 
-                        <!-- Progress Bar -->
-                        <div class="progress" id="progressContainer">
-                            <div class="progress-bar" id="progressBar">0%</div>
-                        </div>
-
-                        <!-- Success and Error Messages -->
-                        <div id="successMessage">File uploaded successfully!</div>
-                        <div id="errorMessage"></div>
+                        
 
                     </div>
 
@@ -846,33 +821,29 @@
         const successMessage = document.getElementById("successMessage");
         const errorMessage = document.getElementById("errorMessage");
 
-        function updateFileName() {
+        async function autoSubmit() {
             const fileInput = document.getElementById("fileInput");
             const fileName = document.getElementById("fileName");
+            const progressContainer = document.getElementById("progressContainer");
+            const progressBar = document.getElementById("progressBar");
+            const successMessage = document.getElementById("successMessage");
+            const errorMessage = document.getElementById("errorMessage");
 
+            // Update file name display
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
             } else {
                 fileName.textContent = "No file chosen";
+                return; // Stop if no file is chosen
             }
-        }
-
-        uploadForm.addEventListener("submit", async (event) => {
-            event.preventDefault(); // Prevent the default form submission
 
             const file = fileInput.files[0];
-            if (!file) {
-                alert("Please select a file to upload.");
-                return;
-            }
-
             const formData = new FormData();
             formData.append("file", file);
 
-            // Reset progress bar and messages
+            // Reset UI
             progressContainer.style.display = "block";
             progressBar.style.width = "0%";
-            progressBar.setAttribute("aria-valuenow", "0");
             progressBar.textContent = "0%";
             successMessage.style.display = "none";
             errorMessage.style.display = "none";
@@ -881,9 +852,7 @@
                 const response = await uploadFileWithProgress("/upload", formData);
                 if (response.ok) {
                     const data = await response.json();
-                    // progressContainer.style.display = "none"; // Hide progress bar
-                    // successMessage.style.display = "block"; // Show success message
-                    // successMessage.textContent = data.message || "File uploaded successfully!";
+
                     // Update UI after successful upload
                     progressBar.style.width = "100%";
                     progressBar.textContent = "Upload Complete";
@@ -892,19 +861,18 @@
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || "File upload failed.");
-                    // throw new Error("File upload failed. Please try again.");
                 }
             } catch (error) {
                 console.error("Error during file upload:", error);
                 errorMessage.style.display = "block";
                 errorMessage.textContent = error.message;
-            }finally {
-                // Hide progress bar after completion
+            } finally {
+                // Hide progress bar after 3 seconds
                 setTimeout(() => {
                     progressContainer.style.display = "none";
                 }, 3000);
             }
-        });
+        }
 
         async function uploadFileWithProgress(url, formData) {
             return new Promise((resolve, reject) => {
@@ -927,10 +895,29 @@
                 // Handle success and error
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
+                        // resolve(new Response(xhr.responseText, {
+                        //     status: xhr.status,
+                        //     statusText: xhr.statusText,
+                        //     headers: new Headers(xhr.getAllResponseHeaders()),
+                        // }));
+                        // Parse raw headers into an object
+                        const headers = xhr
+                            .getAllResponseHeaders()
+                            .trim()
+                            .split(/[\r\n]+/)
+                            .reduce((headerMap, line) => {
+                                const parts = line.split(": ");
+                                const key = parts.shift();
+                                const value = parts.join(": ");
+                                headerMap[key] = value;
+                                return headerMap;
+                            }, {});
+
+                        // Resolve the promise with the parsed headers
                         resolve(new Response(xhr.responseText, {
                             status: xhr.status,
                             statusText: xhr.statusText,
-                            headers: new Headers(xhr.getAllResponseHeaders()),
+                            headers: new Headers(headers),
                         }));
                     } else {
                         reject(new Error(`HTTP error! status: ${xhr.status}`));
@@ -945,6 +932,7 @@
                 xhr.send(formData);
             });
         }
+
     </script>
 
 </body>
