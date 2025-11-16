@@ -28,4 +28,7 @@
 ### Analysing .raw file
 - Contains block in a sequential order
 - Each block consists of block size field, block data (transactions, timestamp, miner reward etc.)
-- It is better not to analyse the .raw file directly due to the complexity of the 
+- It is better not to analyse the .raw file directly due to the complexity of the
+
+
+### Block analysis

@@ -202,20 +202,6 @@
                         <i class="fa fa-bars"></i>
                     </button>
 
-                    <!-- Topbar Search -->
-                    <!-- <form
-                        class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
-                                aria-label="Search" aria-describedby="basic-addon2">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="button">
-                                    <i class="fas fa-search fa-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form> -->
-
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
@@ -426,14 +412,10 @@
                             <!-- Submit button -->
                             <!-- <button type="submit" class="btn btn-success" style="margin-top: 10px;">Submit</button> -->
                         </form>
-
-                        
-
                     </div>
 
                     <!-- Content Row -->
                     <div class="row">
-
                         <!-- Earnings (Monthly) Card Example -->
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-left-primary shadow h-100 py-2">
@@ -528,28 +510,80 @@
                                 <!-- Card Header - Dropdown -->
                                 <div
                                     class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Earnings Overview</h6>
-                                    <!-- <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Dropdown Header:</div>
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">Something else here</a>
-                                        </div>
-                                    </div> -->
+                                    <h6 class="m-0 font-weight-bold text-primary">Block analysis</h6>
                                     <div id="response"></div>
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <div class="chart-area">
-                                        <canvas id="myAreaChart"></canvas>
+                                    
+                                    <!-- Search Bar -->
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="blockQueryInput" class="form-control" placeholder="Enter Block Height or Block Hash" aria-label="Block Query" aria-describedby="button-search">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="button" id="searchBlockButton">Search</button>
+                                        </div>
                                     </div>
+
+                                    <!-- Block Information Display -->
+                                    <!-- <div id="blockInfo" style="display: none; margin-top: 20px;">
+                                        <h5 class="text-primary">Block Information:</h5>
+                                        <ul id="blockInfoList" style="list-style-type: none; padding-left: 0;"> -->
+                                            <!-- Block information will be dynamically populated here -->
+                                        <!-- </ul>
+                                    </div> -->
+
+                                    <!-- Error Message -->
+                                    <!-- <div id="errorMessage" style="display: none; color: red; margin-top: 20px;">
+                                        <strong>Error:</strong> Unable to fetch block information. Please check the block height or hash and try again.
+                                    </div> -->
+                                    <!-- Block Information Section -->
+
+                                    <div id="blockInfoSection" class="mt-4" style="display: none;">
+                                        <h3>Block Information</h3>
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr>
+                                                    <th>Block Height</th>
+                                                    <td id="blockHeight"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Block Hash</th>
+                                                    <td id="blockHash"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Timestamp</th>
+                                                    <td id="blockTimestamp"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Size</th>
+                                                    <td id="blockSize"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Difficulty</th>
+                                                    <td id="blockDifficulty"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Cumulative Difficulty</th>
+                                                    <td id="blockCumulativeDifficulty"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Major/Minor Version</th>
+                                                    <td id="blockVersion"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Nonce</th>
+                                                    <td id="blockNonce"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Miner Reward</th>
+                                                    <td id="blockMinerReward"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Error Message Section -->
+                                    <div id="errorSection" class="alert alert-danger mt-4" style="display: none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -599,119 +633,7 @@
 
                     <!-- Content Row -->
                     <div class="row">
-
-                        <!-- Content Column -->
-                        <div class="col-lg-6 mb-4">
-
-                            <!-- Project Card Example -->
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Projects</h6>
-                                </div>
-                                <div class="card-body">
-                                    <h4 class="small font-weight-bold">Server Migration <span
-                                            class="float-right">20%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"
-                                            aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Sales Tracking <span
-                                            class="float-right">40%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"
-                                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Customer Database <span
-                                            class="float-right">60%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar" role="progressbar" style="width: 60%"
-                                            aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Payout Details <span
-                                            class="float-right">80%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: 80%"
-                                            aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Account Setup <span
-                                            class="float-right">Complete!</span></h4>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"
-                                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Color System -->
-                            <div class="row">
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-primary text-white shadow">
-                                        <div class="card-body">
-                                            Primary
-                                            <div class="text-white-50 small">#4e73df</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-success text-white shadow">
-                                        <div class="card-body">
-                                            Success
-                                            <div class="text-white-50 small">#1cc88a</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-info text-white shadow">
-                                        <div class="card-body">
-                                            Info
-                                            <div class="text-white-50 small">#36b9cc</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-warning text-white shadow">
-                                        <div class="card-body">
-                                            Warning
-                                            <div class="text-white-50 small">#f6c23e</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-danger text-white shadow">
-                                        <div class="card-body">
-                                            Danger
-                                            <div class="text-white-50 small">#e74a3b</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-secondary text-white shadow">
-                                        <div class="card-body">
-                                            Secondary
-                                            <div class="text-white-50 small">#858796</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-light text-black shadow">
-                                        <div class="card-body">
-                                            Light
-                                            <div class="text-black-50 small">#f8f9fc</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card bg-dark text-white shadow">
-                                        <div class="card-body">
-                                            Dark
-                                            <div class="text-white-50 small">#5a5c69</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
+                        
                         <div class="col-lg-6 mb-4">
 
                             <!-- Illustrations -->
@@ -813,7 +735,7 @@
     <script src="/static/js/demo/chart-area-demo.js"></script>
     <script src="/static/js/demo/chart-pie-demo.js"></script>
 
-    <!-- JS function for uploading monero .raw file -->
+    <!-- JS function for uploading monero .mdb file -->
     <script>
         const fileInput = document.getElementById("fileInput");
         const fileName = document.getElementById("fileName");
@@ -823,20 +745,14 @@
         const errorMessage = document.getElementById("errorMessage");
 
         async function autoSubmit() {
-        
-            // Update file name display
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
             } else {
                 fileName.textContent = "No file chosen";
-                return; // Stop if no file is chosen
+                return;
             }
 
             const file = fileInput.files[0];
-            // const formData = new FormData();
-            // formData.append("file", file);
-            fileName.textContent = file.name;
-
             const formData = new FormData();
             formData.append("file", file);
 
@@ -848,16 +764,7 @@
             errorMessage.style.display = "none";
 
             try {
-                // Read file content as text (in memory)
-                // const fileContent = await readFileContent(file);
-
-                // Prepare the payload to send
-                // const payload = {
-                //     tx_as_hex: fileContent,
-                //     do_not_relay: false
-                // };
-
-                // Send the transaction to the Monero daemon
+                // Upload the file
                 const response = await uploadFileWithProgress("/upload", formData);
 
                 if (response.ok) {
@@ -868,6 +775,11 @@
                     progressBar.textContent = "Upload Complete";
                     successMessage.style.display = "block";
                     successMessage.textContent = data.message || "Transaction broadcasted successfully!";
+
+                    // Update block height if available
+                    if (data.latest_block_height) {
+                        document.getElementById("block-height").innerText = data.latest_block_height;
+                    }
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || "Transaction upload failed.");
@@ -877,30 +789,17 @@
                 errorMessage.style.display = "block";
                 errorMessage.textContent = error.message;
             } finally {
-                // Hide the progress bar after 3 seconds
                 setTimeout(() => {
                     progressContainer.style.display = "none";
                 }, 3000);
             }
         }
 
-        // Helper function to read the file content as text
-        // function readFileContent(file) {
-        //     return new Promise((resolve, reject) => {
-        //         const reader = new FileReader();
-        //         reader.onload = () => resolve(reader.result);
-        //         reader.onerror = () => reject(new Error("Failed to read file content."));
-        //         reader.readAsText(file);
-        //     });
-        // }
-
         async function uploadFileWithProgress(url, formData) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open("POST", url);
-                // xhr.setRequestHeader("Content-Type", "application/json");
 
-                // Track upload progress
                 xhr.upload.onprogress = (event) => {
                     if (event.lengthComputable) {
                         const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -913,26 +812,16 @@
                     }
                 };
 
-                // Handle success and error
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        const headers = xhr
-                            .getAllResponseHeaders()
-                            .trim()
-                            .split(/[\r\n]+/)
-                            .reduce((headerMap, line) => {
-                                const parts = line.split(": ");
-                                const key = parts.shift();
-                                const value = parts.join(": ");
-                                headerMap[key] = value;
-                                return headerMap;
-                            }, {});
-
-                        // Resolve the promise with the parsed headers
                         resolve(new Response(xhr.responseText, {
                             status: xhr.status,
                             statusText: xhr.statusText,
-                            headers: new Headers(headers),
+                            headers: new Headers(xhr.getAllResponseHeaders().split("\n").reduce((acc, current) => {
+                                const [key, value] = current.split(": ");
+                                if (key) acc[key.trim()] = value.trim();
+                                return acc;
+                            }, {})),
                         }));
                     } else {
                         reject(new Error(`HTTP error! status: ${xhr.status}`));
@@ -946,7 +835,86 @@
                 xhr.send(formData);
             });
         }
+    </script>
+    
+    <script>
+        document.getElementById("searchBlockButton").addEventListener("click", function () {
+            const query = document.getElementById("blockQueryInput").value.trim();
 
+            // Clear previous results
+            clearBlockInfo();
+            hideError();
+
+            if (!query) {
+                showError("Please enter a block height or hash.");
+                return;
+            }
+
+            // Fetch block information
+            fetch(`/block_info?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Display error if there's an issue
+                        showError(data.error);
+                    } else {
+                        // Populate block information
+                        displayBlockInfo(data);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching block info:", error);
+                    showError("An error occurred while fetching block information.");
+                });
+        });
+
+        // Function to display block information
+        function displayBlockInfo(data) {
+            document.getElementById("blockHeight").textContent = data.height || "N/A";
+            document.getElementById("blockHash").textContent = data.hash || "N/A";
+            document.getElementById("blockTimestamp").textContent = data.timestamp
+                ? new Date(data.timestamp * 1000).toLocaleString() // Convert UNIX timestamp to readable format
+                : "N/A";
+            document.getElementById("blockSize").textContent = data.size || "N/A";
+            document.getElementById("blockDifficulty").textContent = data.difficulty || "N/A";
+            document.getElementById("blockCumulativeDifficulty").textContent = data.cumulative_difficulty || "N/A";
+            document.getElementById("blockVersion").textContent = `${data.major_version || "N/A"}/${data.minor_version || "N/A"}`;
+            document.getElementById("blockNonce").textContent = data.nonce || "N/A";
+            document.getElementById("blockMinerReward").textContent = data.miner_reward || "N/A";
+
+            // Show the block information section
+            document.getElementById("blockInfoSection").style.display = "block";
+        }
+
+        // Function to clear block information
+        function clearBlockInfo() {
+            document.getElementById("blockHeight").textContent = "";
+            document.getElementById("blockHash").textContent = "";
+            document.getElementById("blockTimestamp").textContent = "";
+            document.getElementById("blockSize").textContent = "";
+            document.getElementById("blockDifficulty").textContent = "";
+            document.getElementById("blockCumulativeDifficulty").textContent = "";
+            document.getElementById("blockVersion").textContent = "";
+            document.getElementById("blockNonce").textContent = "";
+            document.getElementById("blockMinerReward").textContent = "";
+            document.getElementById("blockInfoSection").style.display = "none";
+        }
+
+        // Function to show error
+        function showError(message) {
+            const errorSection = document.getElementById("errorSection");
+            errorSection.textContent = message;
+            errorSection.style.display = "block";
+        }
+
+        // Function to hide error
+        function hideError() {
+            const errorSection = document.getElementById("errorSection");
+            errorSection.textContent = "";
+            errorSection.style.display = "none";
+        }
+
+        
     </script>
 
 </body>
