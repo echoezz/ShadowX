@@ -529,7 +529,7 @@
                                 <div
                                     class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                                     <h6 class="m-0 font-weight-bold text-primary">Earnings Overview</h6>
-                                    <div class="dropdown no-arrow">
+                                    <!-- <div class="dropdown no-arrow">
                                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
@@ -542,7 +542,8 @@
                                             <div class="dropdown-divider"></div>
                                             <a class="dropdown-item" href="#">Something else here</a>
                                         </div>
-                                    </div>
+                                    </div> -->
+                                    <div id="response"></div>
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
@@ -814,21 +815,15 @@
 
     <!-- JS function for uploading monero .raw file -->
     <script>
-        const uploadForm = document.getElementById("uploadForm");
         const fileInput = document.getElementById("fileInput");
+        const fileName = document.getElementById("fileName");
         const progressContainer = document.getElementById("progressContainer");
         const progressBar = document.getElementById("progressBar");
         const successMessage = document.getElementById("successMessage");
         const errorMessage = document.getElementById("errorMessage");
 
         async function autoSubmit() {
-            const fileInput = document.getElementById("fileInput");
-            const fileName = document.getElementById("fileName");
-            const progressContainer = document.getElementById("progressContainer");
-            const progressBar = document.getElementById("progressBar");
-            const successMessage = document.getElementById("successMessage");
-            const errorMessage = document.getElementById("errorMessage");
-
+        
             // Update file name display
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
@@ -838,6 +833,10 @@
             }
 
             const file = fileInput.files[0];
+            // const formData = new FormData();
+            // formData.append("file", file);
+            fileName.textContent = file.name;
+
             const formData = new FormData();
             formData.append("file", file);
 
@@ -849,7 +848,18 @@
             errorMessage.style.display = "none";
 
             try {
+                // Read file content as text (in memory)
+                // const fileContent = await readFileContent(file);
+
+                // Prepare the payload to send
+                // const payload = {
+                //     tx_as_hex: fileContent,
+                //     do_not_relay: false
+                // };
+
+                // Send the transaction to the Monero daemon
                 const response = await uploadFileWithProgress("/upload", formData);
+
                 if (response.ok) {
                     const data = await response.json();
 
@@ -857,27 +867,38 @@
                     progressBar.style.width = "100%";
                     progressBar.textContent = "Upload Complete";
                     successMessage.style.display = "block";
-                    successMessage.textContent = data.message || "File uploaded successfully!";
+                    successMessage.textContent = data.message || "Transaction broadcasted successfully!";
                 } else {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || "File upload failed.");
+                    throw new Error(errorData.error || "Transaction upload failed.");
                 }
             } catch (error) {
-                console.error("Error during file upload:", error);
+                console.error("Error during transaction upload:", error);
                 errorMessage.style.display = "block";
                 errorMessage.textContent = error.message;
             } finally {
-                // Hide progress bar after 3 seconds
+                // Hide the progress bar after 3 seconds
                 setTimeout(() => {
                     progressContainer.style.display = "none";
                 }, 3000);
             }
         }
 
+        // Helper function to read the file content as text
+        // function readFileContent(file) {
+        //     return new Promise((resolve, reject) => {
+        //         const reader = new FileReader();
+        //         reader.onload = () => resolve(reader.result);
+        //         reader.onerror = () => reject(new Error("Failed to read file content."));
+        //         reader.readAsText(file);
+        //     });
+        // }
+
         async function uploadFileWithProgress(url, formData) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open("POST", url);
+                // xhr.setRequestHeader("Content-Type", "application/json");
 
                 // Track upload progress
                 xhr.upload.onprogress = (event) => {
@@ -895,12 +916,6 @@
                 // Handle success and error
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        // resolve(new Response(xhr.responseText, {
-                        //     status: xhr.status,
-                        //     statusText: xhr.statusText,
-                        //     headers: new Headers(xhr.getAllResponseHeaders()),
-                        // }));
-                        // Parse raw headers into an object
                         const headers = xhr
                             .getAllResponseHeaders()
                             .trim()
@@ -928,7 +943,6 @@
                     reject(new Error("Network error occurred. Please try again."));
                 };
 
-                // Send the request
                 xhr.send(formData);
             });
         }
