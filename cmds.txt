@@ -7,4 +7,5 @@
 # export to .raw file
 ./monero-blockchain-export --stagenet
 
-
+# Transfer amount (when in the wallet prompt)
+transfer <address> <amount>
