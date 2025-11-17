@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monero Transaction Visualization</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Vis.js for network visualization -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        #visualization-container {
+            height: 600px;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        
+        .info-panel {
+            height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .node-details {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .transaction-details, .block-details {
+            display: none;
+        }
+        
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-right: 5px;
+            vertical-align: middle;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid my-4">
+        <h1 class="text-center mb-4">Monero Transaction and Block Visualization</h1>
+        
+        <!-- Control Panel -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Control Panel</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="txHash" class="form-label">Transaction Hash</label>
+                                    <input type="text" class="form-control" id="txHash" placeholder="Enter transaction hash">
+                                </div>
+                                <button id="loadTransaction" class="btn btn-primary">Load Transaction</button>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="blockHeight" class="form-label">Block Height</label>
+                                    <input type="number" class="form-control" id="blockHeight" placeholder="Enter block height">
+                                </div>
+                                <button id="loadBlock" class="btn btn-primary">Load Block</button>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="depth" class="form-label">Graph Depth</label>
+                                    <select class="form-select" id="depth">
+                                        <option value="1">1 level</option>
+                                        <option value="2" selected>2 levels</option>
+                                        <option value="3">3 levels</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="showRingSignatures" checked>
+                                        <label class="form-check-label" for="showRingSignatures">
+                                            Show Ring Signatures
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Upload Section -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Upload Monero LMDB Data</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="dataFile" class="form-label">Select data.mdb file</label>
+                                <input class="form-control" type="file" id="dataFile" accept=".mdb">
+                            </div>
+                            <button type="submit" class="btn btn-success">Upload and Process</button>
+                        </form>
+                        <div id="uploadStatus" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualization and Info Panels -->
+        <div class="row">
+            <!-- Graph Visualization -->
+            <div class="col-md-8">
+                <div id="visualization-container"></div>
+                
+                <!-- Legend -->
+                <div class="mt-3 p-2 bg-light rounded">
+                    <h6>Legend:</h6>
+                    <div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #2B7CE9;"></div>
+                            <span>Block</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #FFA500;"></div>
+                            <span>Transaction</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #4CAF50;"></div>
+                            <span>Input</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #E91E63;"></div>
+                            <span>Output</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #9C27B0;"></div>
+                            <span>Ring Member</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Information Panel -->
+            <div class="col-md-4">
+                <div class="info-panel">
+                    <h4>Blockchain Explorer</h4>
+                    <p>Click on nodes in the graph to view detailed information.</p>
+                    
+                    <!-- Node details will be shown here -->
+                    <div class="node-details" id="nodeDetails">
+                        <h5 id="nodeTitle">Node Details</h5>
+                        <hr>
+                        
+                        <!-- Transaction details -->
+                        <div class="transaction-details" id="transactionDetails">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Transaction Hash:</td>
+                                    <td id="txId"></td>
+                                </tr>
+                                <tr>
+                                    <td>Block Height:</td>
+                                    <td id="txBlockHeight"></td>
+                                </tr>
+                                <tr>
+                                    <td>Timestamp:</td>
+                                    <td id="txTimestamp"></td>
+                                </tr>
+                                <tr>
+                                    <td>Total Amount:</td>
+                                    <td id="txAmount"></td>
+                                </tr>
+                                <tr>
+                                    <td>Fee:</td>
+                                    <td id="txFee"></td>
+                                </tr>
+                            </table>
+                            <div>
+                                <h6>Inputs: <span id="txInputCount"></span></h6>
+                                <div id="txInputs"></div>
+                            </div>
+                            <div class="mt-3">
+                                <h6>Outputs: <span id="txOutputCount"></span></h6>
+                                <div id="txOutputs"></div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary mt-3" id="showTxRaw">Show Raw Transaction</button>
+                            <pre id="txRaw" style="display:none;"></pre>
+                        </div>
+                        
+                        <!-- Block details -->
+                        <div class="block-details" id="blockDetails">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Block Hash:</td>
+                                    <td id="blockHash"></td>
+                                </tr>
+                                <tr>
+                                    <td>Height:</td>
+                                    <td id="blockHeightValue"></td>
+                                </tr>
+                                <tr>
+                                    <td>Timestamp:</td>
+                                    <td id="blockTimestamp"></td>
+                                </tr>
+                                <tr>
+                                    <td>Difficulty:</td>
+                                    <td id="blockDifficulty"></td>
+                                </tr>
+                                <tr>
+                                    <td>Transactions:</td>
+                                    <td id="blockTxCount"></td>
+                                </tr>
+                            </table>
+                            <button class="btn btn-sm btn-primary" id="expandBlock">Explore Transactions</button>
+                            <div id="blockTransactionsList" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Graph Visualization Script -->
+    <script>
+        // Network visualization object
+        let network = null;
+        
+        // Graph data
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        
+        // Options for the network visualization
+        const options = {
+            nodes: {
+                shape: 'dot',
+                size: 16,
+                font: {
+                    size: 12,
+                    face: 'Tahoma'
+                }
+            },
+            edges: {
+                width: 1,
+                arrows: {
+                    to: { enabled: true, scaleFactor: 0.5 }
+                }
+            },
+            groups: {
+                block: {
+                    color: { background: '#2B7CE9', border: '#2B7CE9' },
+                    shape: 'box'
+                },
+                transaction: {
+                    color: { background: '#FFA500', border: '#FFA500' }
+                },
+                input: {
+                    color: { background: '#4CAF50', border: '#4CAF50' },
+                    shape: 'triangle'
+                },
+                output: {
+                    color: { background: '#E91E63', border: '#E91E63' },
+                    shape: 'triangle'
+                },
+                ring: {
+                    color: { background: '#9C27B0', border: '#9C27B0' },
+                    shape: 'diamond',
+                    size: 10
+                }
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 150,
+                    springConstant: 0.04,
+                    damping: 0.09
+                }
+            },
+            layout: {
+                hierarchical: {
+                    enabled: false
+                }
+            },
+            interaction: {
+                hover: true,
+                navigationButtons: true,
+                keyboard: {
+                    enabled: true
+                }
+            }
+        };
+        
+        // Initialize the network
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('visualization-container');
+            
+            const data = {
+                nodes: nodes,
+                edges: edges
+            };
+            
+            network = new vis.Network(container, data, options);
+            
+            // Handle node click event
+            network.on("click", function(params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const node = nodes.get(nodeId);
+                    
+                    // Display node details
+                    displayNodeDetails(node);
+                }
+            });
+            
+            // Set up button event listeners
+            document.getElementById('loadTransaction').addEventListener('click', loadTransaction);
+            document.getElementById('loadBlock').addEventListener('click', loadBlock);
+            document.getElementById('showTxRaw').addEventListener('click', toggleTxRaw);
+            document.getElementById('expandBlock').addEventListener('click', expandBlockTransactions);
+            
+            // Set up file upload form
+            document.getElementById('uploadForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                uploadAndProcessFile();
+            });
+            
+            // Check if there's an initial transaction to load
+            const initialTx = '{{ initial_tx|default("") }}';
+            if (initialTx) {
+                document.getElementById('txHash').value = initialTx;
+                loadTransaction();
+            } else {
+                // Load sample data if no initial transaction
+                loadSampleData();
+            }
+        });
+        
+        // Function to load a transaction by hash
+        function loadTransaction() {
+            const txHash = document.getElementById('txHash').value.trim();
+            if (!txHash) {
+                alert('Please enter a transaction hash');
+                return;
+            }
+            
+            // Clear existing graph
+            nodes.clear();
+            edges.clear();
+            
+            fetchTransactionData(txHash);
+        }
+        
+        // Function to load a block by height
+        function loadBlock() {
+            const blockHeight = document.getElementById('blockHeight').value.trim();
+            if (!blockHeight) {
+                alert('Please enter a block height');
+                return;
+            }
+            
+            // Clear existing graph
+            nodes.clear();
+            edges.clear();
+            
+            fetchBlockData(blockHeight);
+        }
+        
+        // Fetch transaction data from API
+        function fetchTransactionData(txHash) {
+            // Clear existing graph
+            nodes.clear();
+            edges.clear();
+            
+            // Show loading indicator (could add this)
+            
+            // Fetch data from API
+            fetch(`/api/transaction/${txHash}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Process and display the data
+                    buildTransactionGraph(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching transaction data:', error);
+                    alert('Failed to load transaction data. Using mock data instead.');
+                    
+                    // Use mock data as fallback
+                    const mockData = {
+                        transaction: {
+                            id: txHash,
+                            block_height: 2876543,
+                            timestamp: '2023-05-15 14:23:45 UTC',
+                            fee: 50000000000,
+                            total_amount: 5950000000000,
+                            input_amount: 6000000000000,
+                            output_amount: 5950000000000,
+                            raw_tx: JSON.stringify({version: 2, vin: [], vout: []}, null, 2)
+                        },
+                        inputs: [
+                            {key_image: '8a793f1ed24f315d4f4a2410c35a6a98a0e324c3e85995c9b1c8cd6f22f2c81a', amount: 5000000000000, ring_members: 11},
+                            {key_image: '6c3cd6af97c4cead4b9d27674a55e21a1372c938c77adb14b59c1a69b2a48fe2', amount: 1000000000000, ring_members: 11}
+                        ],
+                        outputs: [
+                            {stealth_address: '20f3edff39ca6fc41f0ce58e354ec3b5670ce93dd98e04be57212a5d6cc5c60a', amount: 3500000000000, index: 0},
+                            {stealth_address: '3fc76a4ab25c758d8fb487eaa9c2a8bd38ad5ca8c9b3c5f729ccb7c7890a33b0', amount: 2450000000000, index: 1}
+                        ],
+                        block: {
+                            height: 2876543,
+                            hash: 'mock_block_hash_2876543'
+                        },
+                        ring_signatures: [
+                            {
+                                input_index: 0,
+                                key_image: '8a793f1ed24f315d4f4a2410c35a6a98a0e324c3e85995c9b1c8cd6f22f2c81a',
+                                ring_members: [
+                                    {key_image: 'ring_0_0_key_image', amount: 5000000000000},
+                                    {key_image: 'ring_0_1_key_image', amount: 5000000000000},
+                                    {key_image: 'ring_0_2_key_image', amount: 5000000000000}
+                                ]
+                            },
+                            {
+                                input_index: 1,
+                                key_image: '6c3cd6af97c4cead4b9d27674a55e21a1372c938c77adb14b59c1a69b2a48fe2',
+                                ring_members: [
+                                    {key_image: 'ring_1_0_key_image', amount: 1000000000000},
+                                    {key_image: 'ring_1_1_key_image', amount: 1000000000000},
+                                    {key_image: 'ring_1_2_key_image', amount: 1000000000000}
+                                ]
+                            }
+                        ]
+                    };
+                    
+                    buildTransactionGraph(mockData);
+                });
+        }
+        
+        // Fetch block data from API
+        function fetchBlockData(blockHeight) {
+            // Clear existing graph
+            nodes.clear();
+            edges.clear();
+            
+            // Show loading indicator (could add this)
+            
+            // Fetch data from API
+            fetch(`/api/block/${blockHeight}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Process and display the data
+                    buildBlockGraph(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching block data:', error);
+                    alert('Failed to load block data. Using mock data instead.');
+                    
+                    // Use mock data as fallback
+                    const mockData = {
+                        block: {
+                            height: parseInt(blockHeight),
+                            hash: `mock_block_hash_${blockHeight}`,
+                            timestamp: '2023-05-15 14:23:45 UTC',
+                            difficulty: 275983652,
+                            size: 12345,
+                            reward: 0.6
+                        },
+                        transactions: [
+                            {hash: `mock_tx_1_${blockHeight}`, fee: 0.05, input_count: 2, output_count: 2, total_amount: 5.95},
+                            {hash: `mock_tx_2_${blockHeight}`, fee: 0.03, input_count: 1, output_count: 3, total_amount: 2.5},
+                            {hash: `mock_tx_3_${blockHeight}`, fee: 0.01, input_count: 3, output_count: 1, total_amount: 1.8}
+                        ],
+                        previous_block: {
+                            height: parseInt(blockHeight) - 1,
+                            hash: `mock_block_hash_${parseInt(blockHeight) - 1}`,
+                            timestamp: '2023-05-15 14:21:45 UTC',
+                            tx_count: 5
+                        },
+                        next_block: {
+                            height: parseInt(blockHeight) + 1,
+                            hash: `mock_block_hash_${parseInt(blockHeight) + 1}`,
+                            timestamp: '2023-05-15 14:25:45 UTC',
+                            tx_count: 8
+                        }
+                    };
+                    
+                    buildBlockGraph(mockData);
+                });
+        }
+        
+        // Build transaction graph from data
+        function buildTransactionGraph(data) {
+            // Add transaction node
+            nodes.add({
+                id: 'tx_' + data.transaction.id,
+                label: 'TX: ' + data.transaction.id.substring(0, 8) + '...',
+                group: 'transaction',
+                title: 'Transaction: ' + data.transaction.id,
+                details: {
+                    type: 'transaction',
+                    hash: data.transaction.id,
+                    blockHeight: data.transaction.block_height,
+                    timestamp: data.transaction.timestamp,
+                    totalAmount: data.transaction.total_amount / 1000000000000, // Convert to XMR
+                    fee: data.transaction.fee / 1000000000000,
+                    inputs: data.inputs.map(input => ({
+                        keyImage: input.key_image,
+                        amount: input.amount / 1000000000000
+                    })),
+                    outputs: data.outputs.map(output => ({
+                        stealthAddress: output.stealth_address,
+                        amount: output.amount / 1000000000000
+                    })),
+                    rawTx: data.transaction.raw_tx
+                }
+            });
+            
+            // Add block node
+            const blockId = 'block_' + data.block.height;
+            nodes.add({
+                id: blockId,
+                label: 'Block: ' + data.block.height,
+                group: 'block',
+                title: 'Block: ' + data.block.height,
+                details: {
+                    type: 'block',
+                    hash: data.block.hash,
+                    height: data.block.height,
+                    timestamp: data.transaction.timestamp,
+                    difficulty: 0, // Not available in this data
+                    txCount: 0  // Not available in this data
+                }
+            });
+            
+            // Connect transaction to block
+            edges.add({
+                from: blockId,
+                to: 'tx_' + data.transaction.id,
+                arrows: 'to',
+                title: 'Contains'
+            });
+            
+            // Add inputs
+            data.inputs.forEach((input, index) => {
+                const inputId = 'input_' + index;
+                const amount = input.amount / 1000000000000; // Convert to XMR
+                
+                nodes.add({
+                    id: inputId,
+                    label: 'Input: ' + amount.toFixed(2) + ' XMR',
+                    group: 'input',
+                    title: 'Input: ' + amount.toFixed(2) + ' XMR'
+                });
+                
+                // Connect input to transaction
+                edges.add({
+                    from: inputId,
+                    to: 'tx_' + data.transaction.id,
+                    arrows: 'to',
+                    title: 'Input: ' + amount.toFixed(2) + ' XMR'
+                });
+                
+                // Add ring signature members if enabled
+                if (document.getElementById('showRingSignatures').checked && data.ring_signatures) {
+                    const ringData = data.ring_signatures.find(r => r.input_index === index);
+                    if (ringData && ringData.ring_members) {
+                        ringData.ring_members.forEach((member, ringIndex) => {
+                            const ringId = 'ring_' + index + '_' + ringIndex;
+                            const ringAmount = member.amount / 1000000000000; // Convert to XMR
+                            
+                            nodes.add({
+                                id: ringId,
+                                label: 'Ring ' + ringIndex,
+                                group: 'ring',
+                                title: 'Ring Member ' + ringIndex + ': ' + ringAmount.toFixed(2) + ' XMR'
+                            });
+                            
+                            edges.add({
+                                from: ringId,
+                                to: inputId,
+                                arrows: 'to',
+                                dashes: true,
+                                title: 'Possible Source'
+                            });
+                        });
+                    }
+                }
+            });
+            
+            // Add outputs
+            data.outputs.forEach((output, index) => {
+                const outputId = 'output_' + index;
+                const amount = output.amount / 1000000000000; // Convert to XMR
+                
+                nodes.add({
+                    id: outputId,
+                    label: 'Output: ' + amount.toFixed(2) + ' XMR',
+                    group: 'output',
+                    title: 'Output: ' + amount.toFixed(2) + ' XMR'
+                });
+                
+                // Connect transaction to output
+                edges.add({
+                    from: 'tx_' + data.transaction.id,
+                    to: outputId,
+                    arrows: 'to',
+                    title: 'Output: ' + amount.toFixed(2) + ' XMR'
+                });
+            });
+            
+            // Fit the graph to the view
+            network.fit();
+        }
+        
+        // Build block graph from data
+        function buildBlockGraph(data) {
+            // Add block node
+            const blockId = 'block_' + data.block.height;
+            nodes.add({
+                id: blockId,
+                label: 'Block: ' + data.block.height,
+                group: 'block',
+                title: 'Block: ' + data.block.height,
+                details: {
+                    type: 'block',
+                    hash: data.block.hash,
+                    height: data.block.height,
+                    timestamp: data.block.timestamp,
+                    difficulty: data.block.difficulty,
+                    txCount: data.transactions.length
+                }
+            });
+            
+            // Add transaction nodes
+            data.transactions.forEach((tx, index) => {
+                const txId = 'tx_' + tx.hash;
+                nodes.add({
+                    id: txId,
+                    label: 'TX: ' + tx.hash.substring(0, 8) + '...',
+                    group: 'transaction',
+                    title: 'Transaction: ' + tx.hash,
+                    details: {
+                        type: 'transaction',
+                        hash: tx.hash,
+                        totalAmount: tx.total_amount,
+                        fee: tx.fee,
+                        inputCount: tx.input_count,
+                        outputCount: tx.output_count
+                    }
+                });
+                
+                // Connect block to transaction
+                edges.add({
+                    from: blockId,
+                    to: txId,
+                    arrows: 'to',
+                    title: 'Contains'
+                });
+            });
+            
+            // Add previous block if available
+            if (data.previous_block) {
+                const prevBlockId = 'block_' + data.previous_block.height;
+                nodes.add({
+                    id: prevBlockId,
+                    label: 'Block: ' + data.previous_block.height,
+                    group: 'block',
+                    title: 'Previous Block: ' + data.previous_block.height,
+                    details: {
+                        type: 'block',
+                        hash: data.previous_block.hash,
+                        height: data.previous_block.height,
+                        timestamp: data.previous_block.timestamp,
+                        txCount: data.previous_block.tx_count
+                    }
+                });
+                
+                // Connect previous block to current block
+                edges.add({
+                    from: prevBlockId,
+                    to: blockId,
+                    arrows: 'to',
+                    title: 'Next Block'
+                });
+            }
+            
+            // Add next block if available
+            if (data.next_block) {
+                const nextBlockId = 'block_' + data.next_block.height;
+                nodes.add({
+                    id: nextBlockId,
+                    label: 'Block: ' + data.next_block.height,
+                    group: 'block',
+                    title: 'Next Block: ' + data.next_block.height,
+                    details: {
+                        type: 'block',
+                        hash: data.next_block.hash,
+                        height: data.next_block.height,
+                        timestamp: data.next_block.timestamp,
+                        txCount: data.next_block.tx_count
+                    }
+                });
+                
+                // Connect current block to next block
+                edges.add({
+                    from: blockId,
+                    to: nextBlockId,
+                    arrows: 'to',
+                    title: 'Next Block'
+                });
+            }
+            
+            // Fit the graph to the view
+            network.fit();
+        }
+        
+        // Upload and process data.mdb file
+        function uploadAndProcessFile() {
+            const fileInput = document.getElementById('dataFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            // Check file extension
+            if (file.name.split('.').pop().toLowerCase() !== 'mdb') {
+                alert('Please select a data.mdb file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show upload status
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="alert alert-info">Uploading and processing file... This may take a while.</div>';
+            statusDiv.style.display = 'block';
+            
+            // Send the file to the server
+            fetch('/process-upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>Data processed successfully!</h5>
+                            <p>Blocks: ${data.summary.block_count}</p>
+                            <p>Transactions: ${data.summary.transaction_count}</p>
+                            <p>Height Range: ${data.summary.height_range[0]} - ${data.summary.height_range[1]}</p>
+                        </div>
+                    `;
+                    
+                    // If blocks were found, load the first one
+                    if (data.summary.block_count > 0) {
+                        document.getElementById('blockHeight').value = data.summary.height_range[0];
+                        loadBlock();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusDiv.innerHTML = '<div class="alert alert-danger">Error processing file: ' + error.message + '</div>';
+            });
+        }
+        
+        // Display details for the selected node
+        function displayNodeDetails(node) {
+            const nodeDetails = document.getElementById('nodeDetails');
+            const transactionDetails = document.getElementById('transactionDetails');
+            const blockDetails = document.getElementById('blockDetails');
+            
+            // Set the node title
+            document.getElementById('nodeTitle').innerText = node.label;
+            
+            // Show the node details panel
+            nodeDetails.style.display = 'block';
+            
+            // Hide all detail types initially
+            transactionDetails.style.display = 'none';
+            blockDetails.style.display = 'none';
+            
+            // Display details based on node type
+            if (node.details && node.details.type === 'transaction') {
+                displayTransactionDetails(node.details);
+                transactionDetails.style.display = 'block';
+            } else if (node.details && node.details.type === 'block') {
+                displayBlockDetails(node.details);
+                blockDetails.style.display = 'block';
+            }
+        }
+        
+        // Display transaction details
+        function displayTransactionDetails(details) {
+            document.getElementById('txId').innerText = details.hash;
+            document.getElementById('txBlockHeight').innerText = details.blockHeight;
+            document.getElementById('txTimestamp').innerText = details.timestamp;
+            document.getElementById('txAmount').innerText = details.totalAmount + ' XMR';
+            document.getElementById('txFee').innerText = details.fee + ' XMR';
+            
+            // Display inputs
+            const inputsContainer = document.getElementById('txInputs');
+            inputsContainer.innerHTML = '';
+            document.getElementById('txInputCount').innerText = details.inputs ? details.inputs.length : 0;
+            
+            if (details.inputs) {
+                details.inputs.forEach((input, index) => {
+                    const inputDiv = document.createElement('div');
+                    inputDiv.innerHTML = `
+                        <small><strong>Input ${index + 1}:</strong> ${input.amount} XMR</small><br>
+                        <small>Key Image: ${input.keyImage.substring(0, 16)}...</small>
+                    `;
+                    inputsContainer.appendChild(inputDiv);
+                    if (index < details.inputs.length - 1) {
+                        inputsContainer.appendChild(document.createElement('hr'));
+                    }
+                });
+            }
+            
+            // Display outputs
+            const outputsContainer = document.getElementById('txOutputs');
+            outputsContainer.innerHTML = '';
+            document.getElementById('txOutputCount').innerText = details.outputs ? details.outputs.length : 0;
+            
+            if (details.outputs) {
+                details.outputs.forEach((output, index) => {
+                    const outputDiv = document.createElement('div');
+                    outputDiv.innerHTML = `
+                        <small><strong>Output ${index + 1}:</strong> ${output.amount} XMR</small><br>
+                        <small>Stealth Address: ${output.stealthAddress.substring(0, 16)}...</small>
+                    `;
+                    outputsContainer.appendChild(outputDiv);
+                    if (index < details.outputs.length - 1) {
+                        outputsContainer.appendChild(document.createElement('hr'));
+                    }
+                });
+            }
+            
+            // Set raw transaction data
+            document.getElementById('txRaw').innerText = details.rawTx;
+        }
+        
+        // Display block details
+        function displayBlockDetails(details) {
+            document.getElementById('blockHash').innerText = details.hash;
+            document.getElementById('blockHeightValue').innerText = details.height;
+            document.getElementById('blockTimestamp').innerText = details.timestamp;
+            document.getElementById('blockDifficulty').innerText = details.difficulty;
+            document.getElementById('blockTxCount').innerText = details.txCount;
+            
+            // Clear the transactions list
+            document.getElementById('blockTransactionsList').innerHTML = '';
+        }
+        
+        // Show/hide raw transaction data
+        function toggleTxRaw() {
+            const txRaw = document.getElementById('txRaw');
+            if (txRaw.style.display === 'none') {
+                txRaw.style.display = 'block';
+                document.getElementById('showTxRaw').innerText = 'Hide Raw Transaction';
+            } else {
+                txRaw.style.display = 'none';
+                document.getElementById('showTxRaw').innerText = 'Show Raw Transaction';
+            }
+        }
+        
+        // Expand block to show all transactions
+        function expandBlockTransactions() {
+            const blockTransactionsList = document.getElementById('blockTransactionsList');
+            const blockHeight = document.getElementById('blockHeightValue').innerText;
+            
+            // Fetch block data again to get transactions
+            fetch(`/api/block/${blockHeight}`)
+                .then(response => response.json())
+                .then(data => {
+                    blockTransactionsList.innerHTML = '';
+                    
+                    data.transactions.forEach((tx, index) => {
+                        const txDiv = document.createElement('div');
+                        txDiv.className = 'mb-2 p-2 border rounded';
+                        txDiv.innerHTML = `
+                            <div><strong>TX #${index + 1}:</strong> ${tx.hash}</div>
+                            <div>Fee: ${tx.fee} XMR | Inputs: ${tx.input_count} | Outputs: ${tx.output_count}</div>
+                            <button class="btn btn-sm btn-outline-primary mt-1 load-tx-btn" data-hash="${tx.hash}">Visualize</button>
+                        `;
+                        blockTransactionsList.appendChild(txDiv);
+                    });
+                    
+                    // Add event listeners to the visualize buttons
+                    document.querySelectorAll('.load-tx-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const hash = this.getAttribute('data-hash');
+                            document.getElementById('txHash').value = hash;
+                            loadTransaction();
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    blockTransactionsList.innerHTML = '<div class="alert alert-danger">Error loading transactions</div>';
+                });
+        }
+        
+        // Load sample data for initial display
+        function loadSampleData() {
+            // Add a simple graph to start with
+            nodes.add([
+                { id: 1, label: 'Block: 2876543', group: 'block', details: { type: 'block', height: 2876543, hash: 'sample_block_hash', timestamp: '2023-05-15 14:23:45 UTC', difficulty: 275983652, txCount: 15 } },
+                { id: 2, label: 'TX: 1234567...', group: 'transaction', details: { type: 'transaction', hash: '1234567890abcdef', blockHeight: 2876543, timestamp: '2023-05-15 14:23:45 UTC', totalAmount: 5.95, fee: 0.05, inputs: [], outputs: [] } },
+                { id: 3, label: 'Block: 2876544', group: 'block', details: { type: 'block', height: 2876544, hash: 'sample_block_hash_2', timestamp: '2023-05-15 14:25:45 UTC', difficulty: 275983652, txCount: 8 } },
+                { id: 4, label: 'TX: abcdef9...', group: 'transaction', details: { type: 'transaction', hash: 'abcdef9012345678', blockHeight: 2876544, timestamp: '2023-05-15 14:25:45 UTC', totalAmount: 2.5, fee: 0.03, inputs: [], outputs: [] } }
+            ]);
+            
+            edges.add([
+                { from: 1, to: 2 },
+                { from: 3, to: 4 },
+                { from: 1, to: 3 }
+            ]);
+            
+            // Focus on the graph
+            network.fit();
+        }
+    </script>
+</body>
+</html>

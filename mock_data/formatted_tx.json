@@ -1,0 +1,34 @@
+{
+    "tx_id": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "block_height": 2876543,
+    "timestamp": "2023-05-15 14:23:45 UTC",
+    "inputs": [
+        {
+            "key_image": "8a793f1ed24f315d4f4a2410c35a6a98a0e324c3e85995c9b1c8cd6f22f2c81a",
+            "amount": 5000000000000,
+            "ring_members": 11
+        },
+        {
+            "key_image": "6c3cd6af97c4cead4b9d27674a55e21a1372c938c77adb14b59c1a69b2a48fe2",
+            "amount": 1000000000000,
+            "ring_members": 11
+        }
+    ],
+    "outputs": [
+        {
+            "stealth_address": "20f3edff39ca6fc41f0ce58e354ec3b5670ce93dd98e04be57212a5d6cc5c60a",
+            "amount": 3500000000000,
+            "index": 0
+        },
+        {
+            "stealth_address": "3fc76a4ab25c758d8fb487eaa9c2a8bd38ad5ca8c9b3c5f729ccb7c7890a33b0",
+            "amount": 2450000000000,
+            "index": 1
+        }
+    ],
+    "total_amount": 5950000000000,
+    "input_amount": 6000000000000,
+    "output_amount": 5950000000000,
+    "tx_fee": 50000000000,
+    "raw_tx": "{\n  \"version\": 2,\n  \"unlock_time\": 0,\n  \"vin\": [\n    {\n      \"key\": {\n        \"amount\": 5000000000000,\n        \"key_offsets\": [\n          34589, 12453, 87652, 23145, 98765, 54321, 12345, 67890, 45678, 98761\n        ],\n        \"k_image\": \"8a793f1ed24f315d4f4a2410c35a6a98a0e324c3e85995c9b1c8cd6f22f2c81a\"\n      }\n    },\n    {\n      \"key\": {\n        \"amount\": 1000000000000,\n        \"key_offsets\": [\n          23456, 65432, 78901, 12378, 45612, 89012, 34589, 76543, 87654, 98761\n        ],\n        \"k_image\": \"6c3cd6af97c4cead4b9d27674a55e21a1372c938c77adb14b59c1a69b2a48fe2\"\n      }\n    }\n  ],\n  \"vout\": [\n    {\n      \"amount\": 3500000000000,\n      \"target\": {\n        \"key\": \"20f3edff39ca6fc41f0ce58e354ec3b5670ce93dd98e04be57212a5d6cc5c60a\"\n      }\n    },\n    {\n      \"amount\": 2450000000000,\n      \"target\": {\n        \"key\": \"3fc76a4ab25c758d8fb487eaa9c2a8bd38ad5ca8c9b3c5f729ccb7c7890a33b0\"\n      }\n    }\n  ],\n  \"extra\": [\n    1, 248, 50, 154, 122, 175, 243, 91, 151, 34, 113, 33, 114, 126, 92, 65, 92, 233, 54, 26, 201, 77, 33, 113, 13, 94, 156, 22, 45, 70, 91, 223, 153\n  ],\n  \"rct_signatures\": {\n    \"type\": 5,\n    \"txnFee\": 50000000000,\n    \"ecdhInfo\": [\n      {\n        \"amount\": \"3627374612ff\"\n      },\n      {\n        \"amount\": \"bde1a09817ff\"\n      }\n    ],\n    \"outPk\": [\n      \"eadb889dda2c5d6b255cc10e4ac914e075c5bf01238f46e90e61ba0f944e73a4\",\n      \"91a44ee5def0fa8744a29b6dc5c88457bd5b2f177757e672c54bc410cbca7414\"\n    ]\n  },\n  \"rctsig_prunable\": {\n    \"borromean\": [\n    ],\n    \"bulletproofs\": [\n      {\n        \"V\": [\n          \"b63c4ec9a4a4ac1a6657e1ec09ae63c3e80c31faa1f74ffefd98e1646657be7d\",\n          \"bfc30acd7dc4e5ccb1b31c5e0fbb9623c8d7dd4f75b923149ac0f3ed0bce4f34\"\n        ]\n      }\n    ]\n  }\n}"
+}
