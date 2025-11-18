@@ -13,7 +13,7 @@ Global index: 9626785
 Origin txid:  77166fcd97785256081654bbae10db36eab4d2ff005da88b3c573451fbd7e0b4
 Origin vout:  0
 Origin height:1982157
-Key:          3693ad23e6404edef7730315eaef9d2e09bdf95afb9ca6779adb293f88ae4012 
+Key:          3693ad23e6404edef7730315eaef9d2e09bdf95afb9ca6779adb293f88ae4012  
 Commitment:   6cfc9403ce42c43def1d29fcadee6315d82576ec9c9b0d9d9843b10a69fd4c06 (outPk Field from get/transactions must be = the mask in get/outs)
 
 
