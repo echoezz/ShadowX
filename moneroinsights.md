@@ -1,4 +1,6 @@
-## How monero provides privacy
+# Understanding monero
+
+### How monero provides privacy
 
 - ringCT - hide the transactional amt
 
@@ -6,8 +8,17 @@
 
 - ring signature - makes use of our acct key and a no. of public keys pulled from blockchain (hiding the possibility of discovering the signer for our acct, hence keeping transaction outputs untraceable)
 
+### Analysing .raw file
+- Contains block in a sequential order
+- Each block consists of block size field, block data (transactions, timestamp, miner reward etc.)
+- It is better not to analyse the .raw file directly due to the complexity of the decoding to human-readable
 
-## Understanding monero
+### About data.mdb
+- It is a binary database managed by LMDB (Lightning Memory-Mapped Database), which stores Monero's blockchain data in a highly optimized, but non-human-readable format.
+- data.mdb uses the LMDB database engine, which stores key-value pairs. Keys and values are stored as binary objects, not plain text.
+- The blockchain data (such as blocks, transaction) is stored in serialized C++ structures unique to monero. To decode it requires understanding of Monero internal serialization format, which is implemented in Monero Source Code (C++)
+- Currently there isnt a way to parse data.mdb, as such most make use of RPC API calls to interact the blockchain data as it includes the decoding logic already
+- The data.mdb contains several tables (or maps) to store diff. parts of the blockchain. (Can refer to monero source code to find out)
 
 ### BlockHeight
 - Sequential no. of a block within blockchain, starting from very first block (aka Genesis block with the Height=0). Next block will be 1 and so on.
@@ -34,7 +45,6 @@ Minor:Indicates smaller updates or backward-compatible changes.
 10. Cumulative difficulty -> Provides a measure of the total computational work done to secure the blockchain.
 
 
-
 ### Miner reward
 - newly created coins that are being paid to the miner for adding a valid block to the chain
 - nobody send you that coin
@@ -51,12 +61,14 @@ Minor:Indicates smaller updates or backward-compatible changes.
     - Everyone agrees that this special transaction is valid
     - The coins it created now exist and belong to the miner
 
-### Analysing .raw file
-- Contains block in a sequential order
-- Each block consists of block size field, block data (transactions, timestamp, miner reward etc.)
-- It is better not to analyse the .raw file directly due to the complexity of the 
+### More about the transactions
+- User initate transactions (walletA --> walletB). Transaction broadcast to monero network and received by nodes (Nodes are the computers running the monero software). Nodes validate the transaction and add it to mempool (unconfirmed transaction waiting area)
+- Miners take unconfirmed transactions from the mempool and package them into a new block. (A block contains a list of transactions across the monero network and also a coinbase transaction - which is a special transction that rewards miners with newly created XMR and transaction fees from the included transactions)
+- Miners solves a cryptographic puzzle. Once they solve it, the new block is then broadcast to the network. Other nodes will also validate to ensure it is valid. If valid, block is added to blockchain
+** Take note, Miners do not add transactions directly to blockchain, they packaged transactions into a new block, where once it is added to blockchain, it includes both miner's reward and transactions
 
-###  Decoy selection
+
+### Decoy selection
 - Decoy is choosen based on gamma distribution (the newer blocks are selected instead of older ones to simulate real-world scenario)
 
 
@@ -71,9 +83,4 @@ Use the --offline option so your node stops talking to other stagenet peers and 
 - analyzing network level patterns (?)
 
 
-# About data.mdb
-- It is a binary database managed by LMDB (Lightning Memory-Mapped Database), which stores Monero's blockchain data in a highly optimized, but non-human-readable format.
-- data.mdb uses the LMDB database engine, which stores key-value pairs. Keys and values are stored as binary objects, not plain text.
-- The blockchain data (such as blocks, transaction) is stored in serialized C++ structures unique to monero. To decode it requires understanding of Monero internal serialization format, which is implemented in Monero Source Code (C++)
-- Currently there isnt a way to parse data.mdb, as such most make use of RPC API calls to interact the blockchain data as it includes the decoding logic already
-- The data.mdb contains several tables (or maps) to store diff. parts of the blockchain. (Can refer to monero source code to find out)
+
