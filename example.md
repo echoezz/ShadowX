@@ -116,13 +116,8 @@ You should get a list of outputs like this shown below:
 {
   "credits": 0,
   "outs": [
-    {
-      "height": 1982157,
-      "key": "3693ad23e6404edef7730315eaef9d2e09bdf95afb9ca6779adb293f88ae4012",
-      "mask": "6cfc9403ce42c43def1d29fcadee6315d82576ec9c9b0d9d9843b10a69fd4c06",
-      "txid": "77166fcd97785256081654bbae10db36eab4d2ff005da88b3c573451fbd7e0b4",
-      "unlocked": true
-    },
+
+
     {
       "height": 1986905,
       "key": "341aefaae9f4c0764c3e54f0a8b90559351719fb03a29100d514e4848a86db45",
@@ -234,13 +229,23 @@ You should get a list of outputs like this shown below:
   "untrusted": false
 }
 
-# Each element of outs corresponds to one ring member of that input.
+### Each element of outs corresponds to one ring member of that input.
 
 To verify that the mapping is correct:
 Replace the txs_Hash with the txid and make sure that the key field value matches in the vout.
 
 
 curl -X POST http://127.0.0.1:38081/get_transactions \\n  -H 'Content-Type: application/json' \\n  -d '{"txs_hashes":["8d3e36b1edb5e46a3375bc06ebe2e65c9304d4798425a7dccb3e5977865374d1"], "decode_as_json": true}' | jq -r '.txs[0].as_json'
+
+
+To get the spending height:
+
+curl -X POST http://127.0.0.1:38081/get_transactions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "txs_hashes": ["f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad"],
+    "decode_as_json": true
+  }' | jq | grep 'height'
 
 
 
@@ -250,3 +255,14 @@ Next step:
 - Transaction-graph building,
 - Any probabilistic “real vs decoy” analysis.
 - Automate the script 
+
+Age-Based Heuristic (Probabilistic):
+
+Compute Age in Blocks:
+age_blocks = spend_height - origin_height
+
+Convert Blocks to Days (Since 1 block is 120 seconds):
+age_days = age_blocks / 720 
+
+
+

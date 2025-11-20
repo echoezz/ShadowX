@@ -15,7 +15,8 @@ Origin vout:  0
 Origin height:1982157
 Key:          3693ad23e6404edef7730315eaef9d2e09bdf95afb9ca6779adb293f88ae4012  
 Commitment:   6cfc9403ce42c43def1d29fcadee6315d82576ec9c9b0d9d9843b10a69fd4c06 (outPk Field from get/transactions must be = the mask in get/outs)
-
+age block:    1,990,415 (spend height) - 1,982,157 (origin height) = 8,258 
+age days:     8258 (age blocks) / 720 = 11.47 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -26,6 +27,8 @@ Origin vout:  0
 Origin height:1986905
 Key:          341aefaae9f4c0764c3e54f0a8b90559351719fb03a29100d514e4848a86db45
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,986,905 (origin height) = 3,510 
+age days:     3510 (age blocks) / 720 = 4.87 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -36,6 +39,8 @@ Origin vout:  0
 Origin height:1988385
 Key:          b1a742856d738043b27ab5e85d70d444f28de3757aec8763dd52d0c32a6f4492
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,988,385 (origin height) = 2,030 
+age days:     2030 (age blocks) / 720 = 2.82 days
 
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
@@ -47,6 +52,9 @@ Origin vout:  0
 Origin height:1988895
 Key:          a9085bec0c02279058426434655521163664df10c807f3ad4f9f6ad8d7a78218
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,988,895 (origin height) = 1,520 
+age days:     1520 (age blocks) / 720 = 2.11 days
+
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -57,6 +65,8 @@ Origin vout:  0
 Origin height:1989135
 Key:          47711a5ad560d3d42a0609c029beb02c2339baa68c13967ee1242253012383be
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,989,135 (origin height) = 1,280 
+age days:     1280 (age blocks) / 720 = 1.78 days
 
 
 
@@ -69,7 +79,8 @@ Origin vout:  0
 Origin height:1989482
 Key:          da4214035480b5ed0a1c7891e10eacaf5a39303ee16ad38030e2e769a1d41bc4
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
-
+age block:    1,990,415 (spend height) - 1,989,482 (origin height) = 933
+age days:     933 (age blocks) / 720 = 1.30 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -80,7 +91,8 @@ Origin vout:  0
 Origin height:1989778
 Key:          298af089e369a6044aeed23c0a222587e39ac83b225e25c4e8c80f0624e55a9c
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
-
+age block:    1,990,415 (spend height) - 1,989,778 (origin height) = 637
+age days:     637 (age blocks) / 720 = 0.88 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -91,6 +103,8 @@ Origin vout:  0
 Origin height:1989813
 Key:          930ccf91975cd5c366a36dd5b5a13eaa5055b614aa045415b01d69c2ddb50e6d
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,989,813 (origin height) = 602
+age days:     602 (age blocks) / 720 = 0.84 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -101,6 +115,8 @@ Origin vout:  0
 Origin height:1990035
 Key:          6a1ecc65d72ed04909fcef4c197bea7cd0085211f83e85570f58fa460efdba9c
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,990,035 (origin height) = 380
+age days:     380 (age blocks) / 720 = 0.53 days
 
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
@@ -112,7 +128,8 @@ Origin vout:  0
 Origin height:1990047
 Key:          1c3631cf2aca2f31392d057f9e30ffbb27efcc9f453b841335cf74dc6e7cdd95
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
-
+age block:    1,990,415 (spend height) - 1,990,047 (origin height) = 368
+age days:     368 (age blocks) / 720 = 0.51 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -123,6 +140,8 @@ Origin vout:  0
 Origin height:1990053
 Key:          b7eb0c1b6269bf1b5aead751831b83c959ee25314010020c5573c40aee7fe3d8
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,990,053 (origin height) = 362
+age days:     362 (age blocks) / 720 = 0.50 days
 
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
@@ -134,6 +153,8 @@ Origin vout:  0
 Origin height:1990054
 Key:          1e62c01a6625adfc4029dd401e15e8061f960962b6d609b89178879b9f5c6020
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,990,054 (origin height) = 361
+age days:     361 (age blocks) / 720 = 0.50 days
 
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
@@ -145,6 +166,8 @@ Origin vout:  0
 Origin height:1990169
 Key:          da0ee85c068c3e3659dc6fabb75d8f6534596e5c1fb1f1a687a0954a6dd396b1
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,990,169 (origin height) = 246
+age days:     246 (age blocks) / 720 = 0.34 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -155,7 +178,8 @@ Origin vout:  0
 Origin height:1990193
 Key:          489151f7a39e18252c744d169670c7a8fc5a9c7c1e954e5e346ff80325507619
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
-
+age block:    1,990,415 (spend height) - 1,990,193 (origin height) = 222
+age days:     222 (age blocks) / 720 = 0.31 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -166,7 +190,8 @@ Origin vout:  0
 Origin height:1990307
 Key:          03de346be485506352794cffc4590b37d2c4de1f9382221d3f7a7ed73cd07f3b
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
-
+age block:    1,990,415 (spend height) - 1,990,307 (origin height) = 108
+age days:     108 (age blocks) / 720 = 0.15 days
 
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
@@ -177,5 +202,8 @@ Origin vout:  0
 Origin height:1990330
 Key:          0fb677098ecad1e563caa06f9d8082185d33f9e8e678c65d301494b2a2fcbcb1
 Commitment:   - (No commitment value to verify bec of it being a non-RingCT transaction, rct_signatures: type 0)
+age block:    1,990,415 (spend height) - 1,990,330 (origin height) = 85
+age days:     85 (age blocks) / 720 = 0.12 days
+
 
 

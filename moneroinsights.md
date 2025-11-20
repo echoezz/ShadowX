@@ -83,4 +83,58 @@ Use the --offline option so your node stops talking to other stagenet peers and 
 - analyzing network level patterns (?)
 
 
+### Wallet Details 
+
+- Private view key (Derived from seed/private spend key (b = H(a)))
+    - Required to view all the transactions regarding the account
+    - Steps:
+        - Scans every transaction on-chain
+        - Decrypt/recognise outputs sent to you (recipient's one-time addresses)
+        - it sees all your incoming inputs
+        - Any change outputs that come back to you
+
+    But the view key has no way to know which of your previous outputs have later been spent, because in Monero:
+
+    Inputs are hidden inside ring signatures with decoys. (?)
+
+    The “real spent output” is not explicitly marked on-chain. (?)
+
+    The link between “this key image” and “that owned output” requires the private spend key. (?)
+
+    - In this sense, it can only see this output belongs to you but you wouldn't know whether it is spend.
+
+    - Every Monero address has a private viewkey which can be shared. In this case, enabling someone to see all the incoming transactions for that address.
+    - As of June 2017, outgoing transactions cannot be accurately seen. Hence, the balance of a Monero address via a viewkey should not be relied upon 
+
+
+- Private spend key (Derived from seed)
+    - Required to accurately know which is the output that is spent and the balance left on the wallet
+    - Utilized to generate key image for your outputs (?)
+    - Can be utilized to generate private viewkey
+    - Utilized to spend any funds in the account
+    - 256-bit integer used to sign Monero Transactions
+    - With this it can reconstruct the private
+
+
+- Key image is unique; that specific output cannot be spent twice (?)
+- Cannot tell which member of the ring is real (?)
+- To Compute key image for an owned output, need the private spend key (?)
+
+(No references yet:)
+With the private spend key:
+You can generate the same key images for all your owned outputs, and match them to key images on-chain → you know exactly which outputs are spent → you know outgoing transactions and correct balance.
+
+With only the private view key:
+You cannot generate key images, so you cannot check which of your outputs were spent. You might guess from changes in balance or seeing change outputs, but this is not cryptographically reliable.
+
+That is why the docs say “outgoing transactions cannot be reliably viewed” with just a view key.
+
+
+Sources:
+https://web.getmonero.org/resources/moneropedia/viewkey.html
+https://www.getmonero.org/resources/user-guides/view_only.html
+
+
+https://www.getmonero.org/resources/moneropedia/spendkey.html
+
 
