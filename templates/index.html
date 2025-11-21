@@ -402,7 +402,7 @@
                         
                         <form id="uploadForm" enctype="multipart/form-data" style="cursor: pointer;">
                             <label for="fileInput" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Upload Monero raw file
+                                <i class="fas fa-upload"></i> Upload data.mdb
                             </label>
                              <!-- Hidden file input -->
                             <input type="file" id="fileInput" name="file" style="display: none;" onchange="autoSubmit()">
@@ -412,6 +412,32 @@
                             <!-- Submit button -->
                             <!-- <button type="submit" class="btn btn-success" style="margin-top: 10px;">Submit</button> -->
                         </form>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <button onclick="startMoneroService()">Start Monero Service</button>
+                                    <!-- <p id="status"></p> -->
+                                    <div id="start-status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Earnings (Monthly) Card Example -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <button id="end-service-btn" onclick="endService()">End Monero Service</button>
+                                    <p id="end-status"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Content Row -->
@@ -503,7 +529,6 @@
                     <!-- Content Row -->
 
                     <div class="row">
-
                         <!-- Area Chart -->
                         <div class="col-xl-8 col-lg-7">
                             <div class="card shadow mb-4">
@@ -523,20 +548,6 @@
                                             <button class="btn btn-primary" type="button" id="searchBlockButton">Search</button>
                                         </div>
                                     </div>
-
-                                    <!-- Block Information Display -->
-                                    <!-- <div id="blockInfo" style="display: none; margin-top: 20px;">
-                                        <h5 class="text-primary">Block Information:</h5>
-                                        <ul id="blockInfoList" style="list-style-type: none; padding-left: 0;"> -->
-                                            <!-- Block information will be dynamically populated here -->
-                                        <!-- </ul>
-                                    </div> -->
-
-                                    <!-- Error Message -->
-                                    <!-- <div id="errorMessage" style="display: none; color: red; margin-top: 20px;">
-                                        <strong>Error:</strong> Unable to fetch block information. Please check the block height or hash and try again.
-                                    </div> -->
-                                    <!-- Block Information Section -->
 
                                     <div id="blockInfoSection" class="mt-4" style="display: none;">
                                         <h3>Block Information</h3>
@@ -633,9 +644,7 @@
 
                     <!-- Content Row -->
                     <div class="row">
-                        
                         <div class="col-lg-6 mb-4">
-
                             <!-- Illustrations -->
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
@@ -743,6 +752,72 @@
         const progressBar = document.getElementById("progressBar");
         const successMessage = document.getElementById("successMessage");
         const errorMessage = document.getElementById("errorMessage");
+
+        // start monero service on button click
+        async function startMoneroService(){
+            
+            const statusElement = document.getElementById("start-status");
+            try {
+                // statusElement.innerText = "Starting service, please wait...";
+                if (statusElement) {
+                    statusElement.innerText = "Starting service, please wait...";
+                }
+
+                // Send a POST request with an empty JSON object
+                const response = await fetch("/start-service", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({}), // Send an empty JSON object if no data is required
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    statusElement.innerText = result.message;
+                } else {
+                    statusElement.innerText = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                statusElement.innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function endService() {
+            const statusElement = document.getElementById("end-status");
+
+            try {
+                // Show a loading message
+                statusElement.innerText = "Stopping service, please wait...";
+
+                // Send a POST request to the backend
+                const response = await fetch("/end-service", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                // Check if the response is JSON
+                const contentType = response.headers.get("Content-Type");
+                if (contentType && contentType.includes("application/json")) {
+                    // Parse and handle JSON response
+                    const result = await response.json();
+                    if (response.ok) {
+                        statusElement.innerText = result.message;
+                    } else {
+                        statusElement.innerText = `Error: ${result.error}`;
+                    }
+                } else {
+                    // Handle non-JSON responses
+                    const text = await response.text();
+                    statusElement.innerText = `Unexpected response: ${text}`;
+                }
+            } catch (error) {
+                // Handle unexpected errors
+                statusElement.innerText = `Error: ${error.message}`;
+            }
+        }
 
         async function autoSubmit() {
             if (fileInput.files.length > 0) {

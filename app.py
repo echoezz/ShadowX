@@ -8,6 +8,9 @@ import traceback
 import uuid
 import tempfile
 
+# for starting monero service
+import subprocess
+
 try:
     from experimental import node_visualization
     node = node_visualization.MoneroNodeVisualization()
@@ -50,7 +53,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 tempfile.tempdir = app.config["UPLOAD_FOLDER"]
 
 # RPC configuration for the Monero daemon
-MONERO_RPC_URL = "http://192.168.177.149:38081/json_rpc"
+# MONERO_RPC_URL = "http://192.168.177.149:38081/json_rpc"
 
 @app.route("/")
 def home():
@@ -74,6 +77,108 @@ def visual_with_tx(tx_hash):
     """Render the visualization page with a transaction hash pre-loaded"""
     return render_template('visual.html', initial_tx=tx_hash)
 
+# functn to start monero service
+def start_monerod(data_dir, rpc_port=38081):
+    """
+    Start the Monero daemon in stagenet mode using the provided data.mdb file.
+    """
+    try:
+    	# monerod path
+        monerod_path = "/home/kali/ShadowX/monero-x86_64-linux-gnu-v0.18.4.4/monerod"
+    
+        # Generate a unique RPC port for this instance (e.g., range 38081–38100)
+        # rpc_port = 38081 + hash(data_dir) % 20
+
+        # Build the monerod command
+        command = [
+            monerod_path,
+            "--stagenet",
+            "--data-dir", data_dir,
+            "--rpc-bind-ip", "127.0.0.1",
+            "--rpc-bind-port", str(rpc_port),
+            "--non-interactive",
+            "--confirm-external-bind"
+        ]
+
+        # Start the process
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Return process details
+        return {"process": process, "rpc_port": rpc_port}
+    except Exception as e:
+        print(f"Error starting monerod: {str(e)}")
+        return None
+
+monerod_process_data = {"process": None, "rpc_port": None}
+@app.route("/start-service", methods=["POST"])
+def start_monero_service():
+    """
+    Start the Monero daemon service and return the RPC URL.
+    """
+    global monerod_process_data
+    try:
+        # Directory to store the blockchain data
+        data_dir = os.path.join(app.config["UPLOAD_FOLDER"], "monero_stagenet")
+        # Ensure the directory exists
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Attempt to parse the JSON body
+        try:
+            request_data = request.get_json() or {}
+        except Exception as e:
+            return jsonify({"error": "Invalid JSON data"}), 400
+
+        # Get the port from the request or use default
+        rpc_port = request.json.get("rpc_port", 38081)
+        # Start monerod
+        monerod_process = start_monerod(data_dir, rpc_port)
+
+        if monerod_process:
+            # Store the process details
+            monerod_process_data["process"] = monerod_process["process"]
+            monerod_process_data["rpc_port"] = monerod_process["rpc_port"]
+
+            return jsonify({
+                "message": "Monero service started successfully.",
+                "rpc_url": f"http://127.0.0.1:{monerod_process['rpc_port']}/json_rpc",
+            }), 200
+        else:
+            return jsonify({"error": "Failed to start Monero service."}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/end-service', methods=["POST"])
+def end_service():
+    """
+    Stop the Monero daemon service.
+    """
+    global monerod_process_data
+
+    # Check if a process is running
+    if monerod_process_data["process"] is None:
+        return jsonify({"error": "No Monero service is currently running."}), 400
+
+    try:
+        # Terminate the process
+        process = monerod_process_data["process"]
+        process.terminate()
+        process.wait(timeout=10)  # Wait for up to 10 seconds for the process to terminate
+        print("Monero service stopped successfully.")
+
+        # Clear the process data
+        monerod_process_data = {"process": None, "rpc_port": None}
+        return jsonify({"message": "Monero service stopped successfully."}), 200
+    except subprocess.TimeoutExpired:
+        # If the process did not terminate, kill it
+        process.kill()
+        monerod_process_data = {"process": None, "rpc_port": None}
+        return jsonify({"message": "Monero service forcefully stopped."}), 200
+    except Exception as e:
+        print(f"Error stopping Monero service: {str(e)}")
+        return jsonify({"error": f"Failed to stop Monero service: {str(e)}"}), 500
+
+
 @app.route('/api/transaction/<tx_hash>')
 def api_get_transaction(tx_hash):
     """API endpoint to get transaction data for graph visualization"""
@@ -94,11 +199,9 @@ def api_get_block(height):
         print(f"Error in api_get_block: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route("/upload", methods=["POST"])
 def upload():
-    """
-    Handles file uploads and fetches the latest block height after successful processing.
-    """
     if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
 
@@ -107,86 +210,36 @@ def upload():
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
 
-    # Validate file extension
     ALLOWED_EXTENSIONS = {"mdb"}
     if not file.filename.split(".")[-1].lower() in ALLOWED_EXTENSIONS:
         return jsonify({"error": "Invalid file type. Only .mdb files are allowed."}), 400
 
     try:
-        # Save the uploaded file to the configured upload folder
+        # Ensure the upload folder exists
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         
-        # Use a unique filename to avoid conflicts
+        # Save the file with a unique name
         unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
-        
         print(f"Saving uploaded file to: {file_path}")
         file.save(file_path)
 
-        # Read the file content from disk
+        # Rename the file back to "data.mdb" for processing
+        renamed_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "data.mdb")
+        os.rename(file_path, renamed_file_path)  # Rename the file to "data.mdb"
+        print(f"Renamed file to: {renamed_file_path}")
+
+        # Process the renamed file
         try:
-            with open(file_path, "rb") as f:
-                raw_tx_content = f.read()  # Read the file as binary
-            raw_tx_hex = raw_tx_content.hex()  # Convert binary to hexadecimal
+            print("Calling process_data_mdb_direct...")
+            result = node.process_data_mdb_direct(renamed_file_path)
+            print(f"Result from processing: {result is not None}")
         except Exception as e:
-            print(f"Error reading file: {e}")
-            return jsonify({"error": f"Failed to read the uploaded file: {str(e)}"}), 500
+            print(f"Error processing file: {str(e)}")
+            return jsonify({"error": f"Failed to process the uploaded file: {str(e)}"}), 500
 
-        # Prepare the payload for the Monero RPC `send_raw_transaction` method
-        payload = {
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "send_raw_transaction",
-            "params": {
-                "tx_as_hex": raw_tx_hex,
-                "do_not_relay": False
-            }
-        }
-        headers = {"Content-Type": "application/json"}
-
-        # Send the raw transaction to the Monero daemon
-        try:
-            print(f"Sending transaction to Monero daemon at {MONERO_RPC_URL}")
-            response = requests.post(MONERO_RPC_URL, data=json.dumps(payload), headers=headers, timeout=30)
-        except requests.exceptions.RequestException as e:
-            print(f"Error connecting to Monero daemon: {e}")
-            # Clean up the file before returning
-            try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            except:
-                pass
-            return jsonify({"error": f"Failed to connect to Monero daemon: {str(e)}"}), 500
-
-        # Delete the temporary file after processing
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                print(f"Removed temporary file: {file_path}")
-        except Exception as e:
-            print(f"Warning: Could not remove temporary file: {str(e)}")
-
-        # Check the response from the Monero daemon
-        if response.status_code == 200:
-            rpc_result = response.json()
-            if "result" in rpc_result and rpc_result["result"].get("status") == "OK":
-                # Transaction broadcasted successfully; fetch the block height
-                block_height = fetch_block_height()
-                if block_height:
-                    return jsonify({
-                        "message": "Transaction broadcasted successfully",
-                        "latest_block_height": block_height
-                    }), 200
-                else:
-                    return jsonify({
-                        "message": "Transaction broadcasted successfully",
-                        "error": "Failed to fetch block height"
-                    }), 200
-            else:
-                error_message = rpc_result.get("error", {}).get("message", "Unknown error")
-                return jsonify({"error": f"Failed to broadcast transaction: {error_message}"}), 400
-        else:
-            return jsonify({"error": f"Failed to connect to Monero daemon: {response.status_code}"}), 500
+        # Return success response
+        return jsonify({"message": "File uploaded and processed successfully"}), 200
 
     except Exception as e:
         error_details = traceback.format_exc()
@@ -194,105 +247,6 @@ def upload():
         print(f"Traceback: {error_details}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-def fetch_block_height():
-    """
-    Fetch the latest block height from the Monero daemon.
-    """
-    try:
-        # Prepare the payload for the Monero RPC `get_block_count` method
-        payload = {
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "get_block_count"
-        }
-        headers = {"Content-Type": "application/json"}
-
-        # Send the request to the Monero daemon
-        response = requests.post(MONERO_RPC_URL, data=json.dumps(payload), headers=headers, timeout=10)
-        if response.status_code == 200:
-            rpc_result = response.json()
-            if "result" in rpc_result:
-                return rpc_result["result"]["count"] - 1  # Return block height
-        
-        print(f"Failed to fetch block height: Unexpected response from daemon")
-        return None
-    except Exception as e:
-        print(f"Failed to fetch block height: {str(e)}")
-        return None
-
-@app.route("/latest_block_height", methods=["GET"])
-def get_latest_block_height():
-    """
-    Fetch and return the current blockchain height.
-    """
-    block_height = fetch_block_height()
-    if block_height is not None:
-        return jsonify({"latest_block_height": block_height}), 200
-    else:
-        return jsonify({"error": "Failed to fetch block height"}), 500
-
-@app.route("/block_info", methods=["GET"])
-def get_block_info():
-    """
-    Fetch and return block information based on block height or block hash.
-    """
-    query = request.args.get("query", "").strip()  # Get user input from query parameter
-
-    if not query:
-        return jsonify({"error": "No block height or hash provided"}), 400
-
-    try:
-        # Determine if input is block height (numeric) or block hash (hexadecimal string)
-        if query.isdigit():
-            # Query is a block height
-            payload = {
-                "jsonrpc": "2.0",
-                "id": "0",
-                "method": "get_block_header_by_height",
-                "params": {"height": int(query)}
-            }
-        else:
-            # Query is a block hash
-            payload = {
-                "jsonrpc": "2.0",
-                "id": "0",
-                "method": "get_block_header_by_hash",
-                "params": {"hash": query}
-            }
-        
-        headers = {"Content-Type": "application/json"}
-
-        # Send the request to the Monero daemon
-        response = requests.post(MONERO_RPC_URL, data=json.dumps(payload), headers=headers, timeout=10)
-
-        if response.status_code == 200:
-            rpc_result = response.json()
-            if "result" in rpc_result:
-                # Extract block header information
-                block_header = rpc_result["result"]["block_header"]
-                # Return detailed block information
-                return jsonify({
-                    "height": block_header["height"],
-                    "hash": block_header["hash"],
-                    "timestamp": block_header["timestamp"],
-                    "size": block_header.get("block_size", "Unknown"),  # Size may not always be available
-                    "difficulty": block_header["difficulty"],
-                    "cumulative_difficulty": block_header.get("cumulative_difficulty", "Unknown"),
-                    "major_version": block_header.get("major_version", "Unknown"),
-                    "minor_version": block_header.get("minor_version", "Unknown"),
-                    "nonce": block_header["nonce"],
-                    "miner_reward": block_header.get("reward", "Unknown")  # Reward may not always be available
-                }), 200
-            else:
-                return jsonify({"error": "Block not found"}), 404
-        else:
-            return jsonify({"error": f"Failed to connect to Monero daemon: {response.status_code}"}), 500
-
-    except Exception as e:
-        error_details = traceback.format_exc()
-        print(f"Error fetching block information: {str(e)}")
-        print(f"Traceback: {error_details}")
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 @app.route("/process-upload", methods=["POST"])
 def process_upload():
@@ -392,7 +346,7 @@ if __name__ == "__main__":
     # Print startup information
     print(f"Starting Flask app with:")
     print(f"- Upload folder: {app.config['UPLOAD_FOLDER']}")
-    print(f"- Monero RPC URL: {MONERO_RPC_URL}")
+    #print(f"- Monero RPC URL: {MONERO_RPC_URL}")
     print(f"- Platform: {platform.system()} {platform.release()}")
     
     # Start the Flask app
