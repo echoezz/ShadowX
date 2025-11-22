@@ -19,6 +19,7 @@
 - The blockchain data (such as blocks, transaction) is stored in serialized C++ structures unique to monero. To decode it requires understanding of Monero internal serialization format, which is implemented in Monero Source Code (C++)
 - Currently there isnt a way to parse data.mdb, as such most make use of RPC API calls to interact the blockchain data as it includes the decoding logic already
 - The data.mdb contains several tables (or maps) to store diff. parts of the blockchain. (Can refer to monero source code to find out)
+- lock.mdb is required for monero stagenet to reference to a data.mdb. If lock.mdb is not found, monero will recreate a stagenet folder each time. (It is also okay to generate a lock.mdb - does not require user to upload one to the webapp)
 
 ### BlockHeight
 - Sequential no. of a block within blockchain, starting from very first block (aka Genesis block with the Height=0). Next block will be 1 and so on.
