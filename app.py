@@ -77,7 +77,7 @@ def visual_with_tx(tx_hash):
     """Render the visualization page with a transaction hash pre-loaded"""
     return render_template('visual.html', initial_tx=tx_hash)
 
-# functn to start monero service
+# functn to start monero service (for inbuilt to web app)
 def start_monerod(base_dir, rpc_port=38081):
     """
     Start the Monero daemon in stagenet mode using the provided data.mdb file.
@@ -118,6 +118,7 @@ def start_monerod(base_dir, rpc_port=38081):
         return None
 
 monerod_process_data = {"process": None, "rpc_port": None}
+# to start monero stagenet service from web app directly after user press button to start
 @app.route("/start-service", methods=["POST"])
 def start_monero_service():
     """
@@ -157,6 +158,7 @@ def start_monero_service():
         print(f"Error in start_monero_service: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
+# end monero stagenet service, user to execute before each end of application usage
 @app.route('/end-service', methods=["POST"])
 def end_service():
     """
@@ -209,6 +211,8 @@ def api_get_block(height):
         return jsonify({'error': str(e)}), 500
 
 # deon version of upload in index.html
+# after user upload their data.mdb file, we will save it to the stagenet/lmdb/ directory
+# the web app already comes with pre-created stagenet/lmdb/ structure without data.mdb
 @app.route("/upload", methods=["POST"])
 def upload():
     if "file" not in request.files:

@@ -819,6 +819,7 @@
             }
         }
 
+        // for auto submitting the file once user select the file
         async function autoSubmit() {
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
@@ -870,6 +871,7 @@
             }
         }
 
+        // for displaying upload progress so user knows upload is ongoing
         async function uploadFileWithProgress(url, formData) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
