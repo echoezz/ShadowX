@@ -426,9 +426,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
+                        
                         <!-- Earnings (Monthly) Card Example -->
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-left-primary shadow h-100 py-2">
@@ -819,7 +817,6 @@
             }
         }
 
-        // for auto submitting the file once user select the file
         async function autoSubmit() {
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
@@ -871,7 +868,6 @@
             }
         }
 
-        // for displaying upload progress so user knows upload is ongoing
         async function uploadFileWithProgress(url, formData) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
