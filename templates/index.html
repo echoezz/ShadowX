@@ -190,13 +190,10 @@
 
         <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
-
             <!-- Main Content -->
             <div id="content">
-
                 <!-- Topbar -->
                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
                     <!-- Sidebar Toggle (Topbar) -->
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
@@ -437,95 +434,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Content Row -->
-                    <!--
-                    <div class="row">
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Earnings (Monthly)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">$40,000</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Earnings (Annual)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">$215,000</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-			-->
-                        <!-- 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tasks
-                                            </div>
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">50%</div>
-                                                </div>
-                                                <div class="col">
-                                                    <div class="progress progress-sm mr-2">
-                                                        <div class="progress-bar bg-info" role="progressbar"
-                                                            style="width: 50%" aria-valuenow="50" aria-valuemin="0"
-                                                            aria-valuemax="100"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Pending Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-		    -->
-                    <!-- Content Row -->
-
                     <div class="row">
                         <!-- Area Chart -->
                         <div class="col-xl-8 col-lg-7">
@@ -541,54 +449,23 @@
                                     
                                     <!-- Search Bar -->
                                     <div class="input-group mb-3">
-                                        <input type="text" id="blockQueryInput" class="form-control" placeholder="Enter Block Height or Block Hash" aria-label="Block Query" aria-describedby="button-search">
-                                        <div class="input-group-append">
-                                            <button class="btn btn-primary" type="button" id="searchBlockButton">Search</button>
-                                        </div>
+                                        <label for="blockHeightInput">Enter Block Height:</label>
+                                        <input type="text" id="blockHeightInput" placeholder="Block Height">
+                                        <button id="searchButton" onclick="searchBlockByHeight()">Search</button>
                                     </div>
 
-                                    <div id="blockInfoSection" class="mt-4" style="display: none;">
-                                        <h3>Block Information</h3>
-                                        <table class="table table-bordered">
-                                            <tbody>
-                                                <tr>
-                                                    <th>Block Height</th>
-                                                    <td id="blockHeight"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Block Hash</th>
-                                                    <td id="blockHash"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Timestamp</th>
-                                                    <td id="blockTimestamp"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Size</th>
-                                                    <td id="blockSize"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Difficulty</th>
-                                                    <td id="blockDifficulty"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Cumulative Difficulty</th>
-                                                    <td id="blockCumulativeDifficulty"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Major/Minor Version</th>
-                                                    <td id="blockVersion"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Nonce</th>
-                                                    <td id="blockNonce"></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Miner Reward</th>
-                                                    <td id="blockMinerReward"></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div class="card-body">
+                                        <h6 class="m-0 font-weight-bold text-primary">Block Information</h6>
+                                        <hr>
+                                        <p><strong>Block Height:</strong> <span id="blockHeight">N/A</span></p>
+                                        <p><strong>Block Hash:</strong> <span id="blockHash">N/A</span></p>
+                                        <p><strong>Timestamp:</strong> <span id="timestamp">N/A</span></p>
+                                        <p><strong>Size:</strong> <span id="size">N/A</span></p>
+                                        <p><strong>Difficulty:</strong> <span id="difficulty">N/A</span></p>
+                                        <p><strong>Cumulative Difficulty:</strong> <span id="cumulativeDifficulty">N/A</span></p>
+                                        <p><strong>Major/Minor Version:</strong> <span id="majorVersion">N/A</span></p>
+                                        <p><strong>Nonce:</strong> <span id="nonce">N/A</span></p>
+                                        <p><strong>Miner Reward:</strong> <span id="minerReward">N/A</span></p>
                                     </div>
 
                                     <!-- Error Message Section -->
@@ -596,88 +473,8 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Pie Chart -->
-                        <!--
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card shadow mb-4">
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Revenue Sources</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Dropdown Header:</div>
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">Something else here</a>
-                                        </div>
-                                    </div>
-                                </div>                                
-                                <div class="card-body">
-                                    <div class="chart-pie pt-4 pb-2">
-                                        <canvas id="myPieChart"></canvas>
-                                    </div>
-                                    <div class="mt-4 text-center small">
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-primary"></i> Direct
-                                        </span>
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-success"></i> Social
-                                        </span>
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-info"></i> Referral
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-		    -->
-                    <!--
-                    <div class="row">
-                        <div class="col-lg-6 mb-4">                            
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Illustrations</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="text-center">
-                                        <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" style="width: 25rem;"
-                                            src="img/undraw_posting_photo.svg" alt="...">
-                                    </div>
-                                    <p>Add some quality, svg illustrations to your project courtesy of <a
-                                            target="_blank" rel="nofollow" href="https://undraw.co/">unDraw</a>, a
-                                        constantly updated collection of beautiful svg images that you can use
-                                        completely free and without attribution!</p>
-                                    <a target="_blank" rel="nofollow" href="https://undraw.co/">Browse Illustrations on
-                                        unDraw &rarr;</a>
-                                </div>
-                            </div>
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Development Approach</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p>SB Admin 2 makes extensive use of Bootstrap 4 utility classes in order to reduce
-                                        CSS bloat and poor page performance. Custom CSS classes are used to create
-                                        custom components and custom utility classes.</p>
-                                    <p class="mb-0">Before working with this theme, you should become familiar with the
-                                        Bootstrap framework, especially the utility classes.</p>
-                                </div>
-                            </div>
-			   
-                        </div>
-                    </div>
-		-->
                 </div>
-                <!-- /.container-fluid -->
-
             </div>
             <!-- End of Main Content -->
 
@@ -904,88 +701,70 @@
                 xhr.send(formData);
             });
         }
-    </script>
-    
-    <script>
-        document.getElementById("searchBlockButton").addEventListener("click", function () {
-            const query = document.getElementById("blockQueryInput").value.trim();
 
-            // Clear previous results
-            clearBlockInfo();
-            hideError();
-
-            if (!query) {
-                showError("Please enter a block height or hash.");
+        // function for getting block info by height
+        function searchBlockByHeight(){
+            const blockHeight = document.getElementById("blockHeightInput").value;
+            console.log("Searching for block height:", blockHeight);
+            if (!blockHeight) {
+                alert('Please enter a block height');
                 return;
             }
+            // Show loading indicator
+            const searchButton = document.querySelector('#searchButton');
+            const originalText = searchButton.innerHTML;
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+            searchButton.disabled = true;
 
-            // Fetch block information
-            fetch(`/block_info?query=${query}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        // Display error if there's an issue
-                        showError(data.error);
-                    } else {
-                        // Populate block information
-                        displayBlockInfo(data);
+            // fetch the block info with /get-block
+            fetch('/get-block', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ height: blockHeight })
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchButton.innerHTML = originalText; // Restore button state
+                searchButton.disabled = false;
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    // Populate the block information fields
+                    document.getElementById('blockHeight').textContent = data.block_height || 'N/A';
+                    document.getElementById('blockHash').textContent = data.block_hash || 'N/A';
+                    document.getElementById('timestamp').textContent = 
+                        data.timestamp ? new Date(data.timestamp * 1000).toLocaleString() : 'N/A';
+                    document.getElementById('size').textContent = data.size || 'N/A';
+                    document.getElementById('difficulty').textContent = data.difficulty || 'N/A';
+                    document.getElementById('cumulativeDifficulty').textContent = data.cumulative_difficulty || 'N/A';
+                    document.getElementById('majorVersion').textContent = 
+                        `${data.major_version || 'N/A'} / ${data.minor_version || 'N/A'}`;
+                    document.getElementById('nonce').textContent = data.nonce || 'N/A';
+                    document.getElementById('minerReward').textContent = 
+                        data.reward ? (data.reward / 1000000000000).toFixed(12) + ' XMR' : 'N/A';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to fetch block information: ' + error.message);
+            })
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('blockHeightInput');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchBlockByHeight();
                     }
-                })
-                .catch(error => {
-                    console.error("Error fetching block info:", error);
-                    showError("An error occurred while fetching block information.");
                 });
+            }
         });
-
-        // Function to display block information
-        function displayBlockInfo(data) {
-            document.getElementById("blockHeight").textContent = data.height || "N/A";
-            document.getElementById("blockHash").textContent = data.hash || "N/A";
-            document.getElementById("blockTimestamp").textContent = data.timestamp
-                ? new Date(data.timestamp * 1000).toLocaleString() // Convert UNIX timestamp to readable format
-                : "N/A";
-            document.getElementById("blockSize").textContent = data.size || "N/A";
-            document.getElementById("blockDifficulty").textContent = data.difficulty || "N/A";
-            document.getElementById("blockCumulativeDifficulty").textContent = data.cumulative_difficulty || "N/A";
-            document.getElementById("blockVersion").textContent = `${data.major_version || "N/A"}/${data.minor_version || "N/A"}`;
-            document.getElementById("blockNonce").textContent = data.nonce || "N/A";
-            document.getElementById("blockMinerReward").textContent = data.miner_reward || "N/A";
-
-            // Show the block information section
-            document.getElementById("blockInfoSection").style.display = "block";
-        }
-
-        // Function to clear block information
-        function clearBlockInfo() {
-            document.getElementById("blockHeight").textContent = "";
-            document.getElementById("blockHash").textContent = "";
-            document.getElementById("blockTimestamp").textContent = "";
-            document.getElementById("blockSize").textContent = "";
-            document.getElementById("blockDifficulty").textContent = "";
-            document.getElementById("blockCumulativeDifficulty").textContent = "";
-            document.getElementById("blockVersion").textContent = "";
-            document.getElementById("blockNonce").textContent = "";
-            document.getElementById("blockMinerReward").textContent = "";
-            document.getElementById("blockInfoSection").style.display = "none";
-        }
-
-        // Function to show error
-        function showError(message) {
-            const errorSection = document.getElementById("errorSection");
-            errorSection.textContent = message;
-            errorSection.style.display = "block";
-        }
-
-        // Function to hide error
-        function hideError() {
-            const errorSection = document.getElementById("errorSection");
-            errorSection.textContent = "";
-            errorSection.style.display = "none";
-        }
-
-        
     </script>
-
+    
 </body>
 
 <style>

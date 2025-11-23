@@ -249,6 +249,74 @@ def upload():
         print(f"Error in upload: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
+# get block info by height feature in index.html
+@app.route("/get-block", methods=["POST"])
+def get_block():
+    """
+    Get block information by height using the running Monero daemon's RPC.
+    """
+    global monerod_process_data
+     # Check if Monero service is running
+    if monerod_process_data["process"] is None or monerod_process_data["rpc_port"] is None:
+        return jsonify({"error": "Monero service is not running. Please start the service first."}), 400
+    try:
+        # Get block height from request
+        data = request.get_json()
+        block_height = data.get("height")
+        if block_height is None:
+            return jsonify({"error": "Block height is required"}), 400
+        # Validate block height is a number
+        try:
+            block_height = int(block_height)
+        except ValueError:
+            return jsonify({"error": "Block height must be a valid number"}), 400
+        # Build RPC URL using the stored port
+        rpc_url = f"http://127.0.0.1:{monerod_process_data['rpc_port']}/json_rpc"
+        # Prepare RPC request payload
+        payload = {
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "get_block",
+            "params": {
+                "height": block_height
+            }
+        }
+        # Make RPC call to monerod
+        response = requests.post(rpc_url, json=payload, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            # Check for RPC errors
+            if "error" in result:
+                return jsonify({"error": f"RPC error: {result['error'].get('message', 'Unknown error')}"}), 500
+            # Extract block information
+            block_data = result.get("result", {})
+            block_header = block_data.get("block_header", {})
+            # Format the response
+            formatted_response = {
+                "block_height": block_header.get("height"),
+                "block_hash": block_header.get("hash"),
+                "timestamp": block_header.get("timestamp"),
+                "size": block_header.get("block_size"),
+                "difficulty": block_header.get("difficulty"),
+                "cumulative_difficulty": block_header.get("cumulative_difficulty"),
+                "major_version": block_header.get("major_version"),
+                "minor_version": block_header.get("minor_version"),
+                "nonce": block_header.get("nonce"),
+                "reward": block_header.get("reward"),
+                "num_txes": block_header.get("num_txes", 0),
+                "orphan_status": block_header.get("orphan_status", False)
+            }
+            return jsonify(formatted_response), 200
+        else:
+            return jsonify({"error": f"Failed to connect to Monero RPC. Status code: {response.status_code}"}), 500
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Request to Monero daemon timed out"}), 500
+    except requests.exceptions.ConnectionError:
+        return jsonify({"error": "Could not connect to Monero daemon. Is it running?"}), 500
+    except Exception as e:
+        print(f"Error in get_block: {str(e)}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 @app.route("/process-upload", methods=["POST"])
 def process_upload():
     """
