@@ -256,7 +256,7 @@ Next step:
 - Any probabilistic “real vs decoy” analysis.
 - Automate the script 
 
-Age-Based Heuristic (Probabilistic):
+### Age-Based Heuristic (Probabilistic):
 
 Compute Age in Blocks:
 age_blocks = spend_height - origin_height
@@ -264,5 +264,48 @@ age_blocks = spend_height - origin_height
 Convert Blocks to Days (Since 1 block is 120 seconds):
 age_days = age_blocks / 720 
 
+### From here onwards is the challenge
+### Formula on my notepad
+Compute Real Spend-Time Probability P_spend (age):
+
+Values:
+shape (k) = 19.28
+rate (r) = 1.61
+scale = 1/1.61 = 0.621
+
+Gamma PDF Formula:
+![alt text](image.png)
+
+Components:
+k - 1 = 18.28
+assume x = age_blocks
+x ^ 18.28 = 18.28 ln (11.47)
+ln(11.47 ^ 18.28) = 2.4405
+18.28 * 2.4405 = 44.63
+11.47 ^ 18.28 = e ^ 44.63 = 2.41 * 10 ^ 19
+To find x, ln 
+
+      
 
 
+After applying all the formulas and getting the values:
+
+
+| pos | age (days) | P_spend(age)       |
+| --- | ---------- | ------------------ |
+| 0   | 11.47      | **0.1494021863**   |
+| 1   | 4.87       | **0.00097359929**  |
+| 2   | 2.82       | **1.2142 × 10⁻⁶**  |
+| 3   | 2.11       | **1.8970 × 10⁻⁸**  |
+| 4   | 1.78       | **1.4408 × 10⁻⁹**  |
+| 5   | 1.30       | **9.9869 × 10⁻¹²** |
+| 6   | 0.88       | **1.5680 × 10⁻¹⁴** |
+| 7   | 0.84       | **7.1451 × 10⁻¹⁵** |
+| 8   | 0.53       | **2.5984 × 10⁻¹⁸** |
+| 9   | 0.51       | **1.3283 × 10⁻¹⁸** |
+| 10  | 0.50       | **9.3991 × 10⁻¹⁹** |
+| 11  | 0.50       | **9.3991 × 10⁻¹⁹** |
+| 12  | 0.34       | **1.0549 × 10⁻²¹** |
+| 13  | 0.31       | **2.0458 × 10⁻²²** |
+| 14  | 0.15       | **4.5666 × 10⁻²⁸** |
+| 15  | 0.12       | **8.1106 × 10⁻³⁰** |
