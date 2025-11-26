@@ -103,6 +103,83 @@ class MoneroNodeVisualization:
             }
         }
     
+    def fetch_transaction_with_rings(self, tx_hash, rpc_port=38081):
+        """Fetch detailed transaction data including ring signatures"""
+        try:
+            # Use the get_transactions endpoint directly
+            rpc_url = f"http://127.0.0.1:{rpc_port}/get_transactions"
+            payload = {
+                "txs_hashes": [tx_hash],
+                "decode_as_json": True
+            }
+            
+            headers = {'Content-Type': 'application/json'}
+            response = requests.post(rpc_url, json=payload, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                return None
+                
+            result = response.json()
+            if "txs" not in result or not result["txs"]:
+                return None
+                
+            tx_data = result["txs"][0]
+            
+            # Parse the transaction JSON
+            tx_json = None
+            if "as_json" in tx_data:
+                try:
+                    tx_json = json.loads(tx_data["as_json"])
+                except json.JSONDecodeError:
+                    return None
+                    
+            if not tx_json:
+                return None
+            
+            # Extract ring signature information for inputs
+            ring_signatures = []
+            for i, vin in enumerate(tx_json.get("vin", [])):
+                if "key" in vin:
+                    key_image = vin["key"].get("k_image", "")
+                    key_offsets = vin["key"].get("key_offsets", [])
+                    
+                    # Get absolute offsets from relative offsets
+                    absolute_offsets = []
+                    running_total = 0
+                    for offset in key_offsets:
+                        running_total += offset
+                        absolute_offsets.append(running_total)
+                    
+                    ring_signatures.append({
+                        "input_index": i,
+                        "key_image": key_image,
+                        "relative_offsets": key_offsets,
+                        "absolute_offsets": absolute_offsets
+                    })
+            
+            # Create a response with all necessary fields including ring data
+            return {
+                "hash": tx_hash,
+                "block_height": tx_data.get("block_height"),
+                "fee": tx_json.get("rct_signatures", {}).get("txnFee"),
+                "size": tx_data.get("size") or tx_data.get("blob_size"),
+                "inputs": len(tx_json.get("vin", [])),
+                "outputs": len(tx_json.get("vout", [])),
+                "version": tx_json.get("version"),
+                "unlock_time": tx_json.get("unlock_time"),
+                "ring_signatures": ring_signatures,
+                "outputs_data": [
+                    {
+                        "index": i,
+                        "amount": output.get("amount", 0),
+                        "target": output.get("target", {})
+                    } for i, output in enumerate(tx_json.get("vout", []))
+                ]
+            }
+        except Exception as e:
+            print(f"Error fetching transaction with rings: {str(e)}")
+            return None
+    
     def process_recent_transaction_blocks(self, count=20, rpc_port=38081):
         """Process only blocks that contain transactions (not just mining rewards)"""
         try:
@@ -157,7 +234,7 @@ class MoneroNodeVisualization:
         except Exception as e:
             print(f"Error fetching transaction blocks: {str(e)}")
             return {"error": str(e)}
-        
+    
     def create_transaction_blocks_graph(self, blocks, rpc_port):
         """Create a graph visualization from transaction blocks"""
         nodes = []
@@ -177,43 +254,86 @@ class MoneroNodeVisualization:
             
             # Add transaction nodes for this block (limited to first 5 per block for performance)
             for i, tx_hash in enumerate(block["tx_hashes"][:5]):
-                tx_id = f"tx_{tx_hash}"
-                nodes.append({
-                    "id": tx_id,
-                    "type": "transaction",
-                    "hash": tx_hash,
-                    "block_height": block["height"]
-                })
+                # Fetch detailed transaction data with rings
+                tx_data = self.fetch_transaction_with_rings(tx_hash, rpc_port)
                 
-                # Link block to transaction
-                links.append({
-                    "source": block_id,
-                    "target": tx_id,
-                    "type": "contains"
-                })
+                if tx_data:
+                    tx_id = f"tx_{tx_hash}"
+                    nodes.append({
+                        "id": tx_id,
+                        "type": "transaction",
+                        "hash": tx_hash,
+                        "block_height": block["height"],
+                        "details": tx_data  # Include the full details
+                    })
+                    
+                    # Link block to transaction
+                    links.append({
+                        "source": block_id,
+                        "target": tx_id,
+                        "type": "contains"
+                    })
+                    
+                    # Add key images and ring members
+                    if "ring_signatures" in tx_data and tx_data["ring_signatures"]:
+                        for ring_info in tx_data["ring_signatures"]:
+                            # Create key image node
+                            key_image = ring_info["key_image"]
+                            key_image_id = f"ki_{key_image[:8]}"
+                            
+                            nodes.append({
+                                "id": key_image_id,
+                                "type": "keyimage",
+                                "key_image": key_image,
+                                "input_index": ring_info["input_index"]
+                            })
+                            
+                            # Link transaction to key image
+                            links.append({
+                                "source": tx_id,
+                                "target": key_image_id,
+                                "type": "input"
+                            })
+                            
+                            # Add ring members (decoys)
+                            if "absolute_offsets" in ring_info:
+                                for offset_idx, offset in enumerate(ring_info["absolute_offsets"]):
+                                    ring_id = f"{key_image_id}_ring_{offset_idx}"
+                                    
+                                    nodes.append({
+                                        "id": ring_id,
+                                        "type": "ring_member",
+                                        "absolute_offset": offset
+                                    })
+                                    
+                                    # Link ring member to key image
+                                    links.append({
+                                        "source": ring_id,
+                                        "target": key_image_id,
+                                        "type": "ring"
+                                    })
+                    
+                    # Add output nodes
+                    if "outputs_data" in tx_data:
+                        for output in tx_data["outputs_data"]:
+                            output_id = f"{tx_id}_out_{output['index']}"
+                            
+                            nodes.append({
+                                "id": output_id,
+                                "type": "output",
+                                "index": output["index"],
+                                "amount": output["amount"]
+                            })
+                            
+                            # Link transaction to output
+                            links.append({
+                                "source": tx_id,
+                                "target": output_id,
+                                "type": "output"
+                            })
         
         return {
             "nodes": nodes,
             "links": links,
             "blocks": blocks
         }
-    
-    # def process_data_mdb_direct(self, file_path):
-    #     """
-    #     Process data.mdb directly (stub method)
-    #     Note: This is a stub that would be replaced with actual implementation
-    #     """
-    #     # Return mock data
-    #     blocks = [
-    #         {'height': 0, 'hash': 'block_hash_0', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-    #         {'height': 1, 'hash': 'block_hash_1', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-    #         {'height': 2, 'hash': 'block_hash_2', 'timestamp': 'Generated', 'difficulty': 'Generated'}
-    #     ]
-    #     transactions = [
-    #         {'hash': 'tx_hash_1', 'block_height': 0},
-    #         {'hash': 'tx_hash_2', 'block_height': 1},
-    #         {'hash': 'tx_hash_3', 'block_height': 1},
-    #         {'hash': 'tx_hash_4', 'block_height': 2},
-    #         {'hash': 'tx_hash_5', 'block_height': 2}
-    #     ]
-    #     return {'blocks': blocks, 'transactions': transactions}

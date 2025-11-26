@@ -259,20 +259,26 @@ def get_block():
 
 @app.route('/api/transaction/<tx_hash>')
 def api_get_transaction(tx_hash):
-    """API endpoint to get transaction data for graph visualization"""
+    """API endpoint to get transaction data with decoy information"""
     global monerod_process_data
     try:
         if monerod_process_data["process"] is None or monerod_process_data["rpc_port"] is None:
             return jsonify({"error": "Monero service is not running. Please start the service first."}), 400
             
-        # Query transaction details using get_transactions RPC
+        # Remove tx_ prefix if present
+        if tx_hash.startswith('tx_'):
+            tx_hash = tx_hash[3:]
+        
+        # Use the exact format that works in your curl command
         rpc_url = f"http://127.0.0.1:{monerod_process_data['rpc_port']}/get_transactions"
         payload = {
             "txs_hashes": [tx_hash],
             "decode_as_json": True
         }
         
-        response = requests.post(rpc_url, json=payload, timeout=10)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(rpc_url, json=payload, headers=headers, timeout=10)
+        
         if response.status_code != 200:
             return jsonify({"error": f"Failed to get transaction data. Status code: {response.status_code}"}), 500
             
@@ -282,7 +288,7 @@ def api_get_transaction(tx_hash):
             
         tx_data = result["txs"][0]
         
-        # Parse as_json field
+        # Parse the transaction JSON
         tx_json = None
         if "as_json" in tx_data:
             try:
@@ -292,13 +298,51 @@ def api_get_transaction(tx_hash):
                 
         if not tx_json:
             return jsonify({"error": "Transaction data is incomplete"}), 500
-            
-        # Process transaction for graph visualization
-        graph_data = node.process_transaction_for_graph(tx_json, tx_hash, tx_data.get("block_height", 0))
         
-        return jsonify(graph_data)
+        # Extract ring signature information for inputs
+        ring_members = []
+        for i, vin in enumerate(tx_json.get("vin", [])):
+            if "key" in vin:
+                key_image = vin["key"].get("k_image", "")
+                key_offsets = vin["key"].get("key_offsets", [])
+                
+                # Get absolute offsets from relative offsets
+                absolute_offsets = []
+                running_total = 0
+                for offset in key_offsets:
+                    running_total += offset
+                    absolute_offsets.append(running_total)
+                
+                ring_members.append({
+                    "input_index": i,
+                    "key_image": key_image,
+                    "relative_offsets": key_offsets,
+                    "absolute_offsets": absolute_offsets
+                })
+        
+        # Create a response with all necessary fields including ring data
+        return jsonify({
+            "hash": tx_hash,
+            "block_height": tx_data.get("block_height"),
+            "fee": tx_json.get("rct_signatures", {}).get("txnFee"),
+            "size": tx_data.get("size") or tx_data.get("blob_size"),
+            "inputs": len(tx_json.get("vin", [])),
+            "outputs": len(tx_json.get("vout", [])),
+            "version": tx_json.get("version"),
+            "unlock_time": tx_json.get("unlock_time"),
+            "ring_signatures": ring_members,
+            # Add output details for visualization
+            "outputs_data": [
+                {
+                    "index": i,
+                    "amount": output.get("amount", 0),
+                    "target": output.get("target", {})
+                } for i, output in enumerate(tx_json.get("vout", []))
+            ]
+        })
     except Exception as e:
         print(f"Error in api_get_transaction: {str(e)}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/transaction-blocks/<int:count>')

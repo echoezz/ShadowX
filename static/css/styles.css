@@ -7,6 +7,10 @@
     --danger: #e74a3b;
     --light: #f8f9fc;
     --dark: #5a5c69;
+    --keyimage: #ee6677;
+    --decoy: #aaaaaa;
+    --transaction: #ffcc00;
+    --output: #44bb99;
 }
 
 body {
@@ -113,7 +117,64 @@ body {
     pointer-events: none;
 }
 
-.legend text {
-    fill: #333;
-    font-family: sans-serif;
+.legend-container {
+    padding: 10px;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-item {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 3px;
+}
+
+.node-transaction {
+    background-color: var(--transaction);
+    border: 1px solid #997700;
+}
+
+.node-keyimage {
+    background-color: var(--keyimage);
+    border: 1px solid #994455;
+}
+
+.node-decoy {
+    background-color: var(--decoy);
+    border: 1px solid #555555;
+}
+
+.node-output {
+    background-color: var(--output);
+    border: 1px solid #227755;
+}
+
+/* Additional styles for ring signatures */
+.ring-line {
+    stroke-dasharray: 5;
+    stroke-opacity: 0.4;
+}
+
+.real-line {
+    stroke-width: 2;
+    stroke-opacity: 0.8;
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 1000;
 }
