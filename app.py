@@ -7,37 +7,8 @@ import platform
 import traceback
 import uuid
 import tempfile
-
-# for starting monero service
 import subprocess
-
-try:
-    from experimental import node_visualization
-    node = node_visualization.MoneroNodeVisualization()
-except ImportError as e:
-    print(f"Warning: Could not import node_visualization module: {e}")
-    # Create a minimal mock to prevent startup errors
-    class MockNode:
-        def process_data_mdb_for_transaction(self, tx_hash):
-            return {"error": "Node visualization module not available"}
-        def process_data_mdb_for_block(self, height):
-            return {"error": "Node visualization module not available"}
-        def process_data_mdb_direct(self, file_path):
-            # Return mock data
-            blocks = [
-                {'height': 0, 'hash': 'block_hash_0', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-                {'height': 1, 'hash': 'block_hash_1', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-                {'height': 2, 'hash': 'block_hash_2', 'timestamp': 'Generated', 'difficulty': 'Generated'}
-            ]
-            transactions = [
-                {'hash': 'tx_hash_1', 'block_height': 0},
-                {'hash': 'tx_hash_2', 'block_height': 1},
-                {'hash': 'tx_hash_3', 'block_height': 1},
-                {'hash': 'tx_hash_4', 'block_height': 2},
-                {'hash': 'tx_hash_5', 'block_height': 2}
-            ]
-            return {'blocks': blocks, 'transactions': transactions}
-    node = MockNode()
+from experimental.node_visualization import MoneroNodeVisualization
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -52,8 +23,11 @@ else:
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 tempfile.tempdir = app.config["UPLOAD_FOLDER"]
 
-# RPC configuration for the Monero daemon
-# MONERO_RPC_URL = "http://192.168.177.149:38081/json_rpc"
+# Initialize visualization module
+node = MoneroNodeVisualization()
+
+# Global variable to store monerod process information
+monerod_process_data = {"process": None, "rpc_port": None}
 
 @app.route("/")
 def home():
@@ -69,21 +43,18 @@ def charts():
 
 @app.route('/visual')
 def visual():
-    """Render the visualization page"""
-    return render_template('visual.html')
+    """Render the visualization page with the most recent transaction blocks"""
+    # Default to showing 20 latest blocks containing transactions
+    count = request.args.get('count', 20, type=int)
+    return render_template('visual.html', view_type="recent_tx_blocks", count=count)
 
-@app.route('/visual/<tx_hash>')
-def visual_with_tx(tx_hash):
-    """Render the visualization page with a transaction hash pre-loaded"""
-    return render_template('visual.html', initial_tx=tx_hash)
-
-# functn to start monero service (for inbuilt to web app)
+# Function to start monero service (for inbuilt to web app)
 def start_monerod(base_dir, rpc_port=38081):
     """
     Start the Monero daemon in stagenet mode using the provided data.mdb file.
     """
     try:
-    	# monerod path
+        # monerod path
         monerod_path = "/home/kali/ShadowX/monero-x86_64-linux-gnu-v0.18.4.4/monerod"
 
         # Build the monerod command
@@ -100,25 +71,24 @@ def start_monerod(base_dir, rpc_port=38081):
         print("data_dir:", base_dir)
         # Start the process
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	
-	# wait briefly to ensure daemon starts and creates the lock.mdb
+    
+        # wait briefly to ensure daemon starts and creates the lock.mdb
         import time
         time.sleep(5)
-	
-	# Check for lock.mdb in the correct location
+    
+        # Check for lock.mdb in the correct location
         stagenet_dir = os.path.join(base_dir, "stagenet")
         lock_mdb_path = os.path.join(stagenet_dir, "lmdb", "lock.mdb")
         if not os.path.exists(lock_mdb_path):
              raise RuntimeError(f"lock.mdb file was not created in {os.path.join(stagenet_dir, 'lmdb')}")
-	
+    
         # Return process details
         return {"process": process, "rpc_port": rpc_port}
     except Exception as e:
         print(f"Error starting monerod: {str(e)}")
         return None
 
-monerod_process_data = {"process": None, "rpc_port": None}
-# to start monero stagenet service from web app directly after user press button to start
+# To start monero stagenet service from web app directly after user press button to start
 @app.route("/start-service", methods=["POST"])
 def start_monero_service():
     """
@@ -126,8 +96,7 @@ def start_monero_service():
     """
     global monerod_process_data
     try:
-        
-         # Directory to store the blockchain data
+        # Directory to store the blockchain data
         base_dir = app.config["UPLOAD_FOLDER"]
         stagenet_dir = os.path.join(base_dir, "stagenet")
         lmdb_dir = os.path.join(stagenet_dir, "lmdb")
@@ -135,8 +104,8 @@ def start_monero_service():
         
         if not os.path.exists(data_mdb_path):
             return jsonify({"error": "data.mdb file is missing in the stagenet directory."}), 400
-	
-	# Get the RPC port from the request or default to 38081
+    
+        # Get the RPC port from the request or default to 38081
         request_data = request.get_json() or {}
         rpc_port = request.json.get("rpc_port", 38081)
         # Start monerod
@@ -158,7 +127,7 @@ def start_monero_service():
         print(f"Error in start_monero_service: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# end monero stagenet service, user to execute before each end of application usage
+# End monero stagenet service
 @app.route('/end-service', methods=["POST"])
 def end_service():
     """
@@ -189,30 +158,6 @@ def end_service():
         print(f"Error stopping Monero service: {str(e)}")
         return jsonify({"error": f"Failed to stop Monero service: {str(e)}"}), 500
 
-
-@app.route('/api/transaction/<tx_hash>')
-def api_get_transaction(tx_hash):
-    """API endpoint to get transaction data for graph visualization"""
-    try:
-        data = node.process_data_mdb_for_transaction(tx_hash)
-        return jsonify(data)
-    except Exception as e:
-        print(f"Error in api_get_transaction: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/block/<height>')
-def api_get_block(height):
-    """API endpoint to get block data for graph visualization"""
-    try:
-        data = node.process_data_mdb_for_block(height)
-        return jsonify(data)
-    except Exception as e:
-        print(f"Error in api_get_block: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-# deon version of upload in index.html
-# after user upload their data.mdb file, we will save it to the stagenet/lmdb/ directory
-# the web app already comes with pre-created stagenet/lmdb/ structure without data.mdb
 @app.route("/upload", methods=["POST"])
 def upload():
     if "file" not in request.files:
@@ -231,25 +176,20 @@ def upload():
         # Ensure the upload folder exists
         stagenet_dir = os.path.join(app.config["UPLOAD_FOLDER"], "stagenet")
         lmdb_dir = os.path.join(stagenet_dir, "lmdb")
-        os.makedirs(stagenet_dir, exist_ok=True)
+        os.makedirs(lmdb_dir, exist_ok=True)
         
-	# Save the uploaded file as data.mdb in the stagenet directory
+        # Save the uploaded file as data.mdb in the stagenet directory
         data_mdb_path = os.path.join(lmdb_dir, "data.mdb")
         file.save(data_mdb_path)
         print(f"Uploaded data.mdb saved to: {data_mdb_path}")
 
         # Return success response
         return jsonify({"message": "File uploaded successfully", "path": data_mdb_path}), 200
-	
+    
     except Exception as e:
-        #error_details = traceback.format_exc()
-        #print(f"General error in upload: {str(e)}")
-        #print(f"Traceback: {error_details}")
-        #return jsonify({"error": f"An error occurred: {str(e)}"}), 500
         print(f"Error in upload: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# get block info by height feature in index.html
 @app.route("/get-block", methods=["POST"])
 def get_block():
     """
@@ -317,96 +257,67 @@ def get_block():
         print(f"Error in get_block: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-@app.route("/process-upload", methods=["POST"])
-def process_upload():
-    """
-    Process an uploaded data.mdb file from a Monero blockchain database
-    """
-    if "file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
-
-    file = request.files["file"]
-
-    if file.filename == "":
-        return jsonify({"error": "No file selected"}), 400
-
-    # Validate file type
-    if not file.filename.split(".")[-1].lower() == "mdb":
-        return jsonify({"error": "Invalid file type. Only data.mdb files are allowed."}), 400
-    
+@app.route('/api/transaction/<tx_hash>')
+def api_get_transaction(tx_hash):
+    """API endpoint to get transaction data for graph visualization"""
+    global monerod_process_data
     try:
-        # Create upload directory if it doesn't exist
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        
-        # Save file temporarily with a unique name to avoid conflicts
-        unique_filename = f"temp_data_{uuid.uuid4().hex}.mdb"
-        temp_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
-        
-        print(f"Saving uploaded file to: {temp_path}")
-        file.save(temp_path)
-        
-        # Process the file with extensive error reporting
-        try:
-            print("Calling process_data_mdb_direct...")
-            result = node.process_data_mdb_direct(temp_path)
-            print(f"Result from processing: {result is not None}")
-        except Exception as e:
-            error_details = traceback.format_exc()
-            print(f"Error in process_data_mdb_direct: {str(e)}")
-            print(f"Traceback: {error_details}")
+        if monerod_process_data["process"] is None or monerod_process_data["rpc_port"] is None:
+            return jsonify({"error": "Monero service is not running. Please start the service first."}), 400
             
-            # Try to fall back to mock data if actual processing fails
-            print("Falling back to mock data...")
-            # Mock data structure
-            blocks = [
-                {'height': 0, 'hash': 'block_hash_0', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-                {'height': 1, 'hash': 'block_hash_1', 'timestamp': 'Generated', 'difficulty': 'Generated'},
-                {'height': 2, 'hash': 'block_hash_2', 'timestamp': 'Generated', 'difficulty': 'Generated'}
-            ]
-            transactions = [
-                {'hash': 'tx_hash_1', 'block_height': 0},
-                {'hash': 'tx_hash_2', 'block_height': 1},
-                {'hash': 'tx_hash_3', 'block_height': 1},
-                {'hash': 'tx_hash_4', 'block_height': 2},
-                {'hash': 'tx_hash_5', 'block_height': 2}
-            ]
-            result = {'blocks': blocks, 'transactions': transactions}
+        # Query transaction details using get_transactions RPC
+        rpc_url = f"http://127.0.0.1:{monerod_process_data['rpc_port']}/get_transactions"
+        payload = {
+            "txs_hashes": [tx_hash],
+            "decode_as_json": True
+        }
         
-        # Clean up
-        try:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-                print(f"Cleaned up temporary file: {temp_path}")
-        except Exception as e:
-            print(f"Warning: Could not remove temporary file: {str(e)}")
+        response = requests.post(rpc_url, json=payload, timeout=10)
+        if response.status_code != 200:
+            return jsonify({"error": f"Failed to get transaction data. Status code: {response.status_code}"}), 500
+            
+        result = response.json()
+        if "txs" not in result or not result["txs"]:
+            return jsonify({"error": "Transaction not found"}), 404
+            
+        tx_data = result["txs"][0]
         
-        if result:
-            # Return success with summary of data
-            block_count = len(result.get('blocks', []))
-            tx_count = len(result.get('transactions', []))
+        # Parse as_json field
+        tx_json = None
+        if "as_json" in tx_data:
+            try:
+                tx_json = json.loads(tx_data["as_json"])
+            except json.JSONDecodeError:
+                return jsonify({"error": "Failed to parse transaction JSON"}), 500
+                
+        if not tx_json:
+            return jsonify({"error": "Transaction data is incomplete"}), 500
             
-            # Calculate height range safely
-            heights = [block['height'] for block in result.get('blocks', [])]
-            min_height = min(heights) if heights else 0
-            max_height = max(heights) if heights else 0
-            
-            return jsonify({
-                "success": True,
-                "message": "Data processed successfully",
-                "summary": {
-                    "block_count": block_count,
-                    "transaction_count": tx_count,
-                    "height_range": [min_height, max_height]
-                }
-            }), 200
-        else:
-            return jsonify({"error": "Failed to process data.mdb file - no data returned"}), 500
+        # Process transaction for graph visualization
+        graph_data = node.process_transaction_for_graph(tx_json, tx_hash, tx_data.get("block_height", 0))
+        
+        return jsonify(graph_data)
+    except Exception as e:
+        print(f"Error in api_get_transaction: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/transaction-blocks/<int:count>')
+def api_transaction_blocks(count=20):
+    """API endpoint to get blocks containing transactions"""
+    global monerod_process_data
+    
+    # Check if Monero service is running
+    if monerod_process_data["process"] is None or monerod_process_data["rpc_port"] is None:
+        return jsonify({"error": "Monero service is not running"}), 400
+        
+    try:
+        # Get transaction blocks
+        graph_data = node.process_recent_transaction_blocks(count, monerod_process_data["rpc_port"])
+        return jsonify(graph_data)
         
     except Exception as e:
-        error_details = traceback.format_exc()
-        print(f"General error in process_upload: {str(e)}")
-        print(f"Traceback: {error_details}")
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        print(f"Error fetching transaction blocks: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     # Make sure the upload folder exists
@@ -415,7 +326,6 @@ if __name__ == "__main__":
     # Print startup information
     print(f"Starting Flask app with:")
     print(f"- Upload folder: {app.config['UPLOAD_FOLDER']}")
-    #print(f"- Monero RPC URL: {MONERO_RPC_URL}")
     print(f"- Platform: {platform.system()} {platform.release()}")
     
     # Start the Flask app
