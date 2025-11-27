@@ -472,6 +472,41 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <!-- Area Chart -->
+                        <div class="col-xl-8 col-lg-7">
+                            <div class="card shadow mb-4">
+                                <!-- Card Header - Dropdown -->
+                                <div
+                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Get transactions</h6>
+                                    <div id="response"></div>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    
+                                    <!-- Search Bar -->
+                                    <div class="input-group mb-3">
+                                        <label for="txsHashInput">Enter txs hash:</label>
+                                        <input type="text" id="txsHashInput" placeholder="Transaction Hash">
+                                        <!-- <button id="searchTXSHashButton" onclick="">Search</button> -->
+                                         <div class="input-group-append">
+                                            <button id="searchTXSHashButton" class="btn btn-primary" onclick="searchTransaction()">Search</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <h6 class="m-0 font-weight-bold text-primary">Get Transaction output</h6>
+                                        <hr>
+                                        <div id="transactionDetails"></div>
+                                    </div>
+
+                                    <!-- Error Message Section -->
+                                    <div id="errorSection" class="alert alert-danger mt-4" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- End of Main Content -->
@@ -763,6 +798,99 @@
         });
     </script>
     
+    <!-- script for get_transactions that takes in txs hash-->
+    <script>
+        async function searchTransaction() {
+            const txsHashInput = document.getElementById('txsHashInput').value.trim();
+            const errorSection = document.getElementById('errorSection');
+            const transactionDetails = document.getElementById('transactionDetails');
+            
+            // Clear previous results
+            errorSection.style.display = 'none';
+            transactionDetails.innerHTML = '';
+            
+            // Validate input
+            if (!txsHashInput) {
+                errorSection.textContent = 'Please enter a transaction hash';
+                errorSection.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Change this URL to your Flask endpoint
+                const response = await fetch('/get-transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        txs_hashes: [txsHashInput]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                if (data.txs && data.txs.length > 0) {
+                    const txData = JSON.parse(data.txs[0].as_json);
+                    displayTransactionData(txData);
+                } else {
+                    errorSection.textContent = 'No transaction found';
+                    errorSection.style.display = 'block';
+                }
+                
+            } catch (error) {
+                errorSection.textContent = 'Error fetching transaction: ' + error.message;
+                errorSection.style.display = 'block';
+            }
+        }
+
+        function displayTransactionData(txData) {
+            const transactionDetails = document.getElementById('transactionDetails');
+            let html = '<div class="transaction-info">';
+            
+            // Display basic transaction info
+            html += `<p><strong>Version:</strong> ${txData.version}</p>`;
+            html += `<p><strong>Unlock Time:</strong> ${txData.unlock_time}</p>`;
+            
+            // Display key_offsets for each input
+            if (txData.vin && txData.vin.length > 0) {
+                html += '<h6 class="mt-3 mb-2 font-weight-bold">Inputs (Key Offsets):</h6>';
+                txData.vin.forEach((input, index) => {
+                    if (input.key) {
+                        html += `<div class="mb-3 p-3" style="background-color: #f8f9fc; border-left: 3px solid #4e73df;">`;
+                        html += `<p><strong>Input ${index + 1}:</strong></p>`;
+                        html += `<p><strong>Amount:</strong> ${input.key.amount}</p>`;
+                        html += `<p><strong>Key Image:</strong> <code style="word-break: break-all;">${input.key.k_image}</code></p>`;
+                        html += `<p><strong>Key Offsets:</strong></p>`;
+                        html += `<ul class="list-group">`;
+                        input.key.key_offsets.forEach((offset, offsetIndex) => {
+                            html += `<li class="list-group-item">${offsetIndex}: ${offset}</li>`;
+                        });
+                        html += `</ul>`;
+                        html += `</div>`;
+                    }
+                });
+            }
+            
+            // Display outputs
+            if (txData.vout && txData.vout.length > 0) {
+                html += '<h6 class="mt-3 mb-2 font-weight-bold">Outputs:</h6>';
+                txData.vout.forEach((output, index) => {
+                    html += `<div class="mb-2 p-2" style="background-color: #f8f9fc;">`;
+                    html += `<p><strong>Output ${index + 1}:</strong> Amount: ${output.amount}, Key: <code>${output.target.key}</code></p>`;
+                    html += `</div>`;
+                });
+            }
+            
+            html += '</div>';
+            transactionDetails.innerHTML = html;
+        }
+    </script>
+
 </body>
 
 <style>

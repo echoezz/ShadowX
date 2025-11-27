@@ -363,6 +363,31 @@ def api_transaction_blocks(count=20):
         print(f"Error fetching transaction blocks: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+# route for get_transactions
+@app.route('/get-transactions', methods=['POST'])
+def get_transactions():
+    data = request.get_json()
+    txs_hashes = data.get('txs_hashes', [])
+    
+    if not txs_hashes:
+        return jsonify({'error': 'No transaction hashes provided'}), 400
+    
+    payload = {
+        'txs_hashes': txs_hashes,
+        'decode_as_json': True
+    }
+    
+    try:
+        response = requests.post(
+            'http://127.0.0.1:38081/get_transactions',
+            json=payload,
+            headers={'Content-Type': 'application/json'}
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     # Make sure the upload folder exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
