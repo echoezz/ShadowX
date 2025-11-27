@@ -8,6 +8,12 @@ rate = 1.61
 theta = 1 / rate           # Gamma scale
 T = 12.0                   # Max age for triangular decoy distribution
 
+# https://www.getmonero.org/resources/moneropedia/block.html
+# age_days = (spend_height - origin_height) / 720
+# Monero target block time = 2 minutes for every block
+# 1 hour -> 30 blocks per hour
+# 24 hours -> 30 * 24 = 720 blocks per day
+# Hence, assuming 720 blocks/day
 # List of ring member ages in days from pos 0 to 15
 ages = [
     11.47, 4.87, 2.82, 2.11, 1.78, 1.30,
@@ -22,6 +28,7 @@ def gamma_pdf(x, k, theta):
     """Silent Gamma PDF (used in probability calculations)."""
     return float((x**(k-1) * mp.e**(-x/theta)) / (mp.gamma(k) * theta**k))
 
+# Until Early 2017, Monero utilized a triangular decoy distribution to select decoy ages
 def dm_triangular(x, T):
     """Silent triangular PDF (old Monero decoy sampling)."""
     if x < 0 or x > T:
@@ -86,7 +93,7 @@ def dm_triangular_verbose(x, T):
 DS = [gamma_pdf(a, k, theta) for a in ages]   # silent version
 DM = [dm_triangular(a, T) for a in ages]
 
-ratios = [ds / dm for ds, dm in zip(DS, DM)]
+ratios = [ds / dm for ds, dm in zip(DS, DM)]   # temporal attack
 total_ratio = sum(ratios)
 P_old = [r / total_ratio for r in ratios]      # OLD Monero P(real)
 P_new = [1/16] * 16                             # MODERN Monero P(real)
@@ -103,7 +110,7 @@ df = pd.DataFrame({
     "P_old_2017": P_old,
     "P_new_modern": P_new
 })
-
+pd.set_option('display.float_format', lambda x: f"{x:.12e}")
 print(df)
 
 # -----------------------------
