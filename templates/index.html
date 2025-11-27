@@ -865,12 +865,31 @@
                         html += `<p><strong>Input ${index + 1}:</strong></p>`;
                         html += `<p><strong>Amount:</strong> ${input.key.amount}</p>`;
                         html += `<p><strong>Key Image:</strong> <code style="word-break: break-all;">${input.key.k_image}</code></p>`;
+                        
+                        // Calculate indices from offsets
+                        const offsets = input.key.key_offsets;
+                        const indices = [];
+                        let sum = 0;
+                        for (let offset of offsets) {
+                            sum += offset;
+                            indices.push(sum);
+                        }
+                        
                         html += `<p><strong>Key Offsets:</strong></p>`;
                         html += `<ul class="list-group">`;
                         input.key.key_offsets.forEach((offset, offsetIndex) => {
                             html += `<li class="list-group-item">${offsetIndex}: ${offset}</li>`;
                         });
                         html += `</ul>`;
+                        html += `</div>`;
+
+                        html += `<p class="mt-3"><strong>Absolute Indices:</strong></p>`;
+                        html += `<ul class="list-group">`;
+                        indices.forEach((idx, idxIndex) => {
+                            html += `<li class="list-group-item">Index ${idxIndex}: ${idx}</li>`;
+                        });
+                        html += `</ul>`;
+                        
                         html += `</div>`;
                     }
                 });
