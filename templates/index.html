@@ -490,7 +490,7 @@
                                         <label for="txsHashInput">Enter txs hash:</label>
                                         <input type="text" id="txsHashInput" placeholder="Transaction Hash">
                                         <!-- <button id="searchTXSHashButton" onclick="">Search</button> -->
-                                         <div class="input-group-append">
+                                        <div class="input-group-append">
                                             <button id="searchTXSHashButton" class="btn btn-primary" onclick="searchTransaction()">Search</button>
                                         </div>
                                     </div>
@@ -507,6 +507,181 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="row">
+                        <div class="col-xl-10 col-lg-9">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Get Outputs</h6>
+                                </div>
+                                <div class="card-body">
+                                    
+                                    <div class="mb-3">
+                                        <p class="text-muted">Enter up to 16 outputs (amount and index pairs)</p>
+                                    </div>
+
+                                    <!-- Input boxes for 16 outputs -->
+                                    <div id="outputInputs" class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row font-weight-bold mb-2">
+                                                    <div class="col-6">Amount</div>
+                                                    <div class="col-6">Index</div>
+                                                </div>
+                                                <!-- First 8 inputs -->
+                                                <div class="output-pair mb-2 row" id="output-0">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 0">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-1">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 1">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-2">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 2">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-3">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 3">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-4">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 4">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-5">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 5">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-6">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 6">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-7">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 7">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row font-weight-bold mb-2">
+                                                    <div class="col-6">Amount</div>
+                                                    <div class="col-6">Index</div>
+                                                </div>
+                                                <!-- Second 8 inputs -->
+                                                <div class="output-pair mb-2 row" id="output-8">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 8">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-9">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 9">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-10">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 10">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-11">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 11">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-12">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 12">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-13">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 13">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-14">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 14">
+                                                    </div>
+                                                </div>
+                                                <div class="output-pair mb-2 row" id="output-15">
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control amount-input" placeholder="Amount" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="number" class="form-control index-input" placeholder="Index 15">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button id="getOutsButton" class="btn btn-primary" onclick="getOuts()">Get Outputs</button>
+
+                                    <div class="card-body" id="outsOutput">
+                                        <h6 class="m-0 font-weight-bold text-primary">Output Results</h6>
+                                        <hr>
+                                        <div id="outsDetails"></div>
+                                    </div>
+
+                                    <div id="outsErrorSection" class="alert alert-danger mt-4" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
             <!-- End of Main Content -->
@@ -907,6 +1082,89 @@
             
             html += '</div>';
             transactionDetails.innerHTML = html;
+        }
+    </script>
+
+    <!-- script for get_outs-->
+    <script>
+        async function getOuts() {
+            const errorSection = document.getElementById('outsErrorSection');
+            const outsDetails = document.getElementById('outsDetails');
+            
+            errorSection.style.display = 'none';
+            outsDetails.innerHTML = '';
+            
+            // Collect all outputs from input fields
+            const outputs = [];
+            for (let i = 0; i < 16; i++) {
+                const outputPair = document.getElementById(`output-${i}`);
+                const amount = parseInt(outputPair.querySelector('.amount-input').value);
+                const index = parseInt(outputPair.querySelector('.index-input').value);
+                
+                // Only add if index is provided
+                if (!isNaN(index) && index !== '') {
+                    outputs.push({
+                        amount: isNaN(amount) ? 0 : amount,
+                        index: index
+                    });
+                }
+            }
+            
+            if (outputs.length === 0) {
+                errorSection.textContent = 'Please enter at least one index value';
+                errorSection.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/get-outs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        outputs: outputs
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                displayOutsData(data);
+                
+            } catch (error) {
+                errorSection.textContent = 'Error fetching outputs: ' + error.message;
+                errorSection.style.display = 'block';
+            }
+        }
+
+        function displayOutsData(data) {
+            const outsDetails = document.getElementById('outsDetails');
+            let html = '<div class="outs-info">';
+            
+            if (data.outs && data.outs.length > 0) {
+                html += '<h6 class="mt-3 mb-3 font-weight-bold">Retrieved Outputs:</h6>';
+                
+                data.outs.forEach((output, index) => {
+                    html += `<div class="mb-3 p-3" style="background-color: #f8f9fc; border-left: 3px solid #4e73df;">`;
+                    html += `<p><strong>Output ${index + 1}:</strong></p>`;
+                    html += `<p><strong>Height:</strong> ${output.height}</p>`;
+                    html += `<p><strong>Key:</strong> <code style="word-break: break-all;">${output.key}</code></p>`;
+                    html += `<p><strong>Mask:</strong> <code style="word-break: break-all;">${output.mask}</code></p>`;
+                    html += `<p><strong>Unlocked:</strong> ${output.unlocked}</p>`;
+                    if (output.txid) {
+                        html += `<p><strong>Transaction ID:</strong> <code style="word-break: break-all;">${output.txid}</code></p>`;
+                    }
+                    html += `</div>`;
+                });
+            } else {
+                html += '<p>No outputs found</p>';
+            }
+            
+            html += '</div>';
+            outsDetails.innerHTML = html;
         }
     </script>
 

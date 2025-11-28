@@ -388,6 +388,29 @@ def get_transactions():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/get-outs', methods=['POST'])
+def get_outs():
+    data = request.get_json()
+    outputs = data.get('outputs', [])
+    
+    if not outputs:
+        return jsonify({'error': 'No outputs provided'}), 400
+    
+    payload = {
+        'outputs': outputs,
+        'get_txid': True
+    }
+    
+    try:
+        response = requests.post(
+            'http://127.0.0.1:38081/get_outs',
+            json=payload,
+            headers={'Content-Type': 'application/json'}
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     # Make sure the upload folder exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
