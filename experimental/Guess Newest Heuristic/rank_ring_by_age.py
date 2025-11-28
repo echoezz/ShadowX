@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Usage:
-    python rank_ring_by_age.py <tx_hash>
+rank_ring_by_age.py <tx_hash>
+
+Outputs height-based GNH scores AND generates:
+Plot: age_height vs gnh_score (saved as gnh_age_plot.png)
 """
 
-import sys, math, requests, json, time
+import sys, math, requests, json
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
 
 DAEMON = "http://127.0.0.1:38081"
 EPS = 1e-9
@@ -16,9 +18,7 @@ EPS = 1e-9
 ###############################################################################
 
 def rpc(endpoint, payload):
-    """Generic RPC wrapper for Monero daemon."""
     url = f"{DAEMON}/{endpoint}"
-
     r = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
     r.raise_for_status()
     return r.json()
@@ -32,23 +32,14 @@ def get_block_ts(height, cache):
     if height in cache:
         return cache[height]
 
-    try:
-        j = rpc("json_rpc", {
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "get_block_header_by_height",
-            "params": {"height": height}
-        })
-    except Exception:
-        cache[height] = None
-        return None
+    j = rpc("json_rpc", {
+        "jsonrpc": "2.0",
+        "id": "0",
+        "method": "get_block_header_by_height",
+        "params": {"height": height}
+    })
 
-    result = j.get("result")
-    if not result:
-        cache[height] = None
-        return None
-
-    ts = result["block_header"].get("timestamp")
+    ts = j["result"]["block_header"]["timestamp"]
     cache[height] = ts
     return ts
 
@@ -86,73 +77,53 @@ def cumulative(offsets):
     return out
 
 def get_output_heights(globals_list):
-    """Return list of output heights (None when unknown)."""
+    """Return output heights directly from get_outs."""
     payload = {"outputs": [{"amount": 0, "index": i} for i in globals_list]}
     j = rpc("get_outs", payload)
-    outs = j.get("outs", [])
-    return [o.get("height") for o in outs]
+    outs = j["outs"]
+    return [o["height"] for o in outs]
 
 ###############################################################################
-# SCORING HEURISTICS
+# SCORING (HEIGHT-BASED GNH)
 ###############################################################################
 
-def compute_scores_for_valid_ages(valid_ages):
-    """Compute age-based scores for non-missing rows only."""
-    scores = {}
-    ages = list(valid_ages)
-
+def compute_norm_age(ages):
+    """Normalize age using: norm_age = (max - age) / (max - min)"""
     if len(ages) == 0:
-        for col in ["inv_age", "norm_age", "neglog", "softmax_norm_age"]:
-            scores[col] = []
-        return scores
+        return []
 
-    scores["inv_age"] = [1.0 / (a + 86400.0) for a in ages]
+    mi = min(ages)
+    ma = max(ages)
 
-    mi, ma = min(ages), max(ages)
     if ma - mi < EPS:
-        scores["norm_age"] = [1.0] * len(ages)
-    else:
-        scores["norm_age"] = [(ma - a) / (ma - mi) for a in ages]
+        return [1.0] * len(ages)
 
-    scores["neglog"] = [-math.log(a / 86400.0 + 1e-6) for a in ages]
-
-    exps = [math.exp(s) for s in scores["norm_age"]]
-    ssum = sum(exps) + EPS
-    scores["softmax_norm_age"] = [e / ssum for e in exps]
-
-    return scores
+    return [(ma - a) / (ma - mi) for a in ages]
 
 ###############################################################################
-# PRINT HELPERS
+# PLOTTING
 ###############################################################################
 
-def print_gnh_ranking(df):
-    """Print only gnh_score ranking, always showing all 16 rows."""
-    
-    # Any missing values?
-    missing_flag = df[["out_height", "out_timestamp", "age_seconds", "gnh_score"]].isnull().any().any()
-
-    header = "=== Ranking by gnh_score"
-    if missing_flag:
-        header += " (missing shown as MISSING)"
-    header += " ==="
-
-    print("\n" + header)
-
-    # Sort: highest score first, NaN always last
-    df_sorted = df.sort_values("gnh_score", ascending=False, na_position="last")
-
-    # Fill missing for printing only
-    print(df_sorted.fillna("MISSING").to_string(index=False))
-
+def plot_age_vs_gnh(df):
+    """Generate: age_height vs gnh_score plot."""
+    plt.figure(figsize=(8, 5))
+    plt.scatter(df["age_height"], df["gnh_score"])
+    plt.xlabel("age_height (blocks)")
+    plt.ylabel("gnh_score (0–1)")
+    plt.title("GNH Score vs Age (in Blocks)")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("gnh_age_plot.png")
+    print("[+] Saved plot → gnh_age_plot.png")
 
 ###############################################################################
 # MAIN
 ###############################################################################
 
 def main(tx_hash):
-    print(f"[+] Fetching TX {tx_hash}")
-    tx, tx_height, tx_ts = get_tx_json(tx_hash)
+
+    print(f"[+] Fetching TX: {tx_hash}")
+    tx, spend_height, _ = get_tx_json(tx_hash)
 
     vins = [v for v in tx.get("vin", []) if "key" in v]
     if not vins:
@@ -163,66 +134,38 @@ def main(tx_hash):
     offsets = key["key_offsets"]
     globals_idx = cumulative(offsets)
 
-    print(f"[+] Ring size: {len(globals_idx)}")
-    print("[+] Fetching output heights...")
-    heights = get_output_heights(globals_idx)
+    print(f"[+] Ring size = {len(globals_idx)}")
+    print("[+] Fetching output heights via get_outs...")
+    out_heights = get_output_heights(globals_idx)
 
-    block_cache = {}
-    timestamps = []
+    # Compute age in blocks
+    ages = [(spend_height - h) for h in out_heights]
 
-    print("[+] Fetching block timestamps...")
-    for i, h in enumerate(heights):
-        if h is None:
-            timestamps.append(None)
-        else:
-            timestamps.append(get_block_ts(h, block_cache))
-
-        if i % 10 == 0:
-            print(f"  ... {i+1}/{len(heights)}")
-
-    ages = []
-    for ts in timestamps:
-        ages.append(max(0, tx_ts - ts) if ts is not None else None)
+    # Normalize to GNH score
+    norm_age = compute_norm_age(ages)
 
     df = pd.DataFrame({
         "global_index": globals_idx,
-        "out_height": heights,
-        "out_timestamp": timestamps,
-        "age_seconds": ages
+        "out_height": out_heights,
+        "age_height": ages,
+        "norm_age": norm_age
     })
 
-    df = df.replace({None: np.nan})
+    df["gnh_score"] = df["norm_age"]
 
-    valid_mask = df["age_seconds"].notnull()
-    valid_ages = df.loc[valid_mask, "age_seconds"].astype(float).tolist()
+    print("\n=== Ranking by gnh_score (using block-height age) ===")
+    print(df.sort_values("gnh_score", ascending=False).to_string(index=False))
 
-    scores = compute_scores_for_valid_ages(valid_ages)
+    df.to_csv("ring_age_height_scores.csv", index=False)
+    print("\n[+] Saved → ring_age_height_scores.csv")
 
-    for col in ["inv_age", "norm_age", "neglog", "softmax_norm_age"]:
-        df[col] = np.nan
-
-    if len(valid_ages) > 0:
-        df.loc[valid_mask, "inv_age"] = scores["inv_age"]
-        df.loc[valid_mask, "norm_age"] = scores["norm_age"]
-        df.loc[valid_mask, "neglog"] = scores["neglog"]
-        df.loc[valid_mask, "softmax_norm_age"] = scores["softmax_norm_age"]
-
-        df.loc[valid_mask, "gnh_score"] = df.loc[valid_mask, "norm_age"]
-        df.loc[valid_mask, "newest_rank"] = df.loc[valid_mask, "age_seconds"].rank(ascending=True)
-    else:
-        df["gnh_score"] = np.nan
-        df["newest_rank"] = np.nan
-
-    print_gnh_ranking(df)
-
-    df.to_csv("ring_age_scores.csv", index=False)
-    print("\n[+] Saved → ring_age_scores.csv")
+    # PLOT (age_height vs gnh_score)
+    plot_age_vs_gnh(df)
 
 ###############################################################################
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 2:
         print("Usage: python rank_ring_by_age.py <tx_hash>")
         sys.exit(1)
-
     main(sys.argv[1])
