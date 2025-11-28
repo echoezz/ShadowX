@@ -65,7 +65,10 @@ def start_monerod(base_dir, rpc_port=38081):
             "--rpc-bind-ip", "127.0.0.1",
             "--rpc-bind-port", str(rpc_port),
             "--non-interactive",
-            "--confirm-external-bind"
+            "--confirm-external-bind",
+            "--offline",  # Run in offline mode - no network connections
+            "--no-igd",   # Disable UPnP port mapping
+            "--p2p-bind-port", "0"  # Disable P2P port (no peer connections)
         ]
         print(f"Starting monerod with command: {' '.join(command)}")
         print("data_dir:", base_dir)
