@@ -303,7 +303,8 @@ class MoneroNodeVisualization:
                                     nodes.append({
                                         "id": ring_id,
                                         "type": "ring_member",
-                                        "absolute_offset": offset
+                                        "absolute_offset": offset,
+                                        "position": offset_idx
                                     })
                                     
                                     # Link ring member to key image

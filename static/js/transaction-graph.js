@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (d.type === 'block') return 'b:' + d.height;
                 if (d.type === 'transaction') return 'tx:' + d.hash.substring(0, 6);
                 if (d.type === 'keyimage') return 'ki:' + (d.key_image ? d.key_image.substring(0, 6) : '');
-                if (d.type === 'ring_member') return 'r:' + d.absolute_offset;
+                if (d.type === 'ring_member') return 'pos ' + d.position + ' r: ' + d.absolute_offset;
                 if (d.type === 'output') return 'o:' + d.index;
                 if (d.type === 'input') return 'in:' + d.input_index;
                 return d.id ? d.id.substring(0, 6) : '';
@@ -500,6 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (node.type === 'ring_member') {
             txDetails.innerHTML = `
                 <h5>Ring Member</h5>
+                <p><strong>Position:</strong> ${node.position || 'Unknown'}</p>
                 <p><strong>Output offset:</strong> ${node.absolute_offset || 'Unknown'}</p>
                 <p class="text-muted">This is a potential input source in the ring signature.</p>
                 <p class="text-muted">Only one member of the ring is the real input being spent.</p>
