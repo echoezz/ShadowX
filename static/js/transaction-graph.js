@@ -498,12 +498,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p><strong>This represents one of the inputs being spent in this transaction.</strong></p>
             `;
         } else if (node.type === 'ring_member') {
-            txDetails.innerHTML = `
+            
+            /*txDetails.innerHTML = `
                 <h5>Ring Member</h5>
                 <p><strong>Position:</strong> ${node.position || 'Unknown'}</p>
                 <p><strong>Output offset:</strong> ${node.absolute_offset || 'Unknown'}</p>
                 <p class="text-muted">This is a potential input source in the ring signature.</p>
                 <p class="text-muted">Only one member of the ring is the real input being spent.</p>
+            `;
+            */
+            const info = node.ring_output_info;
+            const ageDays =
+                node.age_days !== null && node.age_days !== undefined
+                ? Number(node.age_days).toFixed(2)   // <-- force 2 decimals
+                : 'Unknown'
+
+            txDetails.innerHTML = `
+                <h5>Ring Member</h5>
+                <p><strong>Position:</strong> ${node.position}</p>
+                <p><strong>Output offset:</strong> ${node.absolute_offset}</p>
+
+                ${info ? `
+                    <p><strong>Block height:</strong> ${info.height}</p>
+                    <p><strong>Origin TXID:</strong> ${info.txid || 'Unknown'}</p>
+                    <p><strong>Output key:</strong> ${info.key  || 'Unknown'}</p>
+                ` : `<p>No ring metadata available.</p>`}
+                
+                <p><strong>Spend height:</strong> ${node.spend_height ?? 'Unknown'}</p>
+                <p><strong>Age (blocks):</strong> ${node.age_blocks ?? 'Unknown'}</p>
+                <p><strong>Age (days):</strong> ${ageDays}</p>
+
+                <p class="text-muted">Potential ring member.</p>
             `;
         } else if (node.type === 'output') {
             txDetails.innerHTML = `

@@ -299,14 +299,60 @@ class MoneroNodeVisualization:
                             if "absolute_offsets" in ring_info:
                                 for offset_idx, offset in enumerate(ring_info["absolute_offsets"]):
                                     ring_id = f"{key_image_id}_ring_{offset_idx}"
-                                    
+                                    """
                                     nodes.append({
                                         "id": ring_id,
                                         "type": "ring_member",
                                         "absolute_offset": offset,
                                         "position": offset_idx
+                                    }) 
+                                    """
+                                    # Call get_outs for this specific ring member
+                                    outs_payload = {
+                                        "outputs": [{"amount": 0, "index": offset}],
+                                        "get_txid": True
+                                    }
+
+                                    try:
+                                        outs_resp = requests.post(
+                                            f"http://127.0.0.1:{rpc_port}/get_outs",
+                                            json=outs_payload,
+                                            timeout=10
+                                        ).json()
+                                        
+                                        ring_out_info = outs_resp.get("outs", [{}])[0]
+                                    except:
+                                        ring_out_info = {}
+                                        
+
+                                    nodes.append({
+                                        "id": ring_id,
+                                        "type": "ring_member",
+                                        "absolute_offset": offset,
+                                        "position": offset_idx,
+                                        "ring_output_info": ring_out_info
                                     })
-                                    
+
+                                    # --- AGE / SPEND-HEIGHT CALCULATION ---
+                                    spend_height = block["height"]
+                                    origin_height = ring_out_info.get("height")
+
+                                    if origin_height is not None:
+                                        age_blocks = spend_height - origin_height
+                                        age_days = age_blocks / 720.0
+
+                                        age_days = round(age_days, 2) 
+                                    else:
+                                        age_blocks = None
+                                        age_days = None
+
+                                    nodes[-1]["spend_height"] = spend_height
+                                    nodes[-1]["origin_height"] = origin_height
+                                    nodes[-1]["age_blocks"] = age_blocks
+                                    nodes[-1]["age_days"] = age_days
+                                    # --------------------------------------
+
+
                                     # Link ring member to key image
                                     links.append({
                                         "source": ring_id,
