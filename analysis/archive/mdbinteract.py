@@ -111,7 +111,7 @@ def list_all_keys(db_path):
         print(f"\nTotal keys displayed: {count}")
 
 # Path to the directory containing the Monero data.mdb file
-# DB_PATH = "C:/Users/YHdeo/School/DF/project/ShadowX/experimental/data.mdb"  # Replace with the actual path
+# DB_PATH = "XX/data.mdb"  # Replace with the actual path
 
 def inspect_raw_values(db_path):
     """

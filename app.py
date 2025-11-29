@@ -8,7 +8,7 @@ import traceback
 import uuid
 import tempfile
 import subprocess
-from experimental.node_visualization import MoneroNodeVisualization
+from analysis.node_visualization import MoneroNodeVisualization
 
 
 # Initialize Flask app
@@ -486,55 +486,6 @@ def gamma_for_tx(txid):
         "DM": DM
     }
 
-
-
-# For Gamma aggregate
-"""
-@app.route("/api/gamma-aggregate")
-def gamma_aggregate():
-    global global_latest_graph
-
-    if not global_latest_graph:
-        return {"error": "graph not generated yet"}, 400
-
-    # Collect ALL ages
-    ring_nodes = [
-        n for n in global_latest_graph["nodes"]
-        if n.get("type") == "ring_member" and n.get("age_days") is not None
-    ]
-
-    if not ring_nodes:
-        return {"error": "no ring data found"}, 404
-
-    # Sort by age instead of position
-    ring_nodes = sorted(ring_nodes, key=lambda x: x["age_days"])
-    ages = [n["age_days"] for n in ring_nodes]
-
-    # Gamma + DM
-    import mpmath as mp
-    k = 19.28
-    rate = 1.61
-    theta = 1 / rate
-    T = 12.0
-
-    def gamma_pdf(x):
-        return float((x**(k-1) * mp.e**(-x/theta)) / (mp.gamma(k) * theta**k))
-
-    def dm_triangular(x):
-        if x < 0 or x > T:
-            return 0
-        return 2 * (T - x) / (T*T)
-
-    DS = [gamma_pdf(a) for a in ages]
-    DM = [dm_triangular(a) for a in ages]
-
-    return {
-        "count": len(ages),
-        "ages": ages,
-        "DS": DS,
-        "DM": DM
-    }
-"""
 
 if __name__ == "__main__":
     # Make sure the upload folder exists
