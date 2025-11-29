@@ -551,9 +551,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p><strong>Output key:</strong> ${info.key  || 'Unknown'}</p>
                 ` : `<p>No ring metadata available.</p>`}
                 
+                <p><strong>Spend height:</strong> ${node.spend_height ?? 'Unknown'}</p>
+                <p><strong>Age (blocks):</strong> ${node.age_blocks ?? 'Unknown'}</p>
+                <p><strong>Age (days):</strong> ${ageDays}</p>
                 
                 <p class="text-muted">Potential ring member.</p>
             `;
+            
         } else if (node.type === 'output') {
             txDetails.innerHTML = `
                 <h5>Output Details</h5>
