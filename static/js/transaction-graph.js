@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function to extract a subgraph for a specific transaction
-    function extractTransactionSubgraph(txNode) {
+    function extractTransactionSubgraph(txNode, includeRings = false, keyImageId = null) {
         if (!fullGraphData || !txNode) return { nodes: [], links: [] };
         
         const subgraphNodes = [txNode]; // Start with the transaction node
@@ -130,11 +130,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Second pass: For key images and inputs/outputs, include their connections
-        // This ensures ring members and related entities are included
+        // But only include ring members for the specific key image if requested
         const expandedNodeIds = new Set();
         
         subgraphNodes.forEach(node => {
-            if (node.type === 'keyimage' || node.type === 'input' || node.type === 'output') {
+            if (node.type === 'input' || node.type === 'output' || 
+                (includeRings && node.type === 'keyimage' && 
+                 (keyImageId === null || node.id === keyImageId))) {
                 expandedNodeIds.add(node.id);
             }
         });
@@ -142,6 +144,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add connections for these special nodes
         fullGraphData.links.forEach(link => {
             if (expandedNodeIds.has(link.source) || expandedNodeIds.has(link.target)) {
+                // Skip ring connections unless requested AND for the specific key image
+                if (link.type === 'ring') {
+                    if (!includeRings) return;
+                    
+                    // For ring links, only include if target is the specified key image
+                    if (keyImageId !== null && link.target !== keyImageId) return;
+                }
+                
                 // Find the other node
                 const srcNodeId = link.source;
                 const targetNodeId = link.target;
@@ -197,8 +207,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get the current transaction
         const currentTx = transactions[index];
         
-        // Extract subgraph data for this transaction
-        const txData = extractTransactionSubgraph(currentTx);
+        // Extract subgraph data for this transaction (initially without rings)
+        const txData = extractTransactionSubgraph(currentTx, false, null);
         
         // Render the graph with just this transaction's data
         renderGraph(txData);
@@ -403,6 +413,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             showNodeDetails(d);
             
+            // If this is a key image node, toggle ring display for THIS key image only
+            if (d.type === 'keyimage') {
+                // Get the current transaction
+                const currentTx = transactions[currentTxIndex];
+                
+                // Check if rings are already visible for this key image
+                const hasRingMembers = data.links.some(link => 
+                    link.type === 'ring' && link.target === d.id);
+                
+                // Extract subgraph with rings only for this key image
+                const txData = extractTransactionSubgraph(
+                    currentTx, 
+                    !hasRingMembers,  // Toggle state
+                    !hasRingMembers ? d.id : null  // Only pass the key image ID if showing rings
+                );
+                
+                // Render the graph with the updated data
+                renderGraph(txData);
+                
+                // Re-highlight the key image node after re-rendering
+                setTimeout(() => {
+                    d3.selectAll(".nodes g").filter(node => node.id === d.id)
+                        .select("polygon")
+                        .attr("stroke-width", 3);
+                }, 100);
+            }
+            
             // Prevent event from bubbling up
             event.stopPropagation();
         });
@@ -487,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p><strong>Fee:</strong> ${formatMoneroAmount(details.fee)}</p>
                 <p><strong>Inputs:</strong> ${details.inputs !== undefined ? details.inputs : 'Unknown'}</p>
                 <p><strong>Outputs:</strong> ${details.outputs !== undefined ? details.outputs : 'Unknown'}</p>
-                <p><strong>Size:</strong> ${details.size ? details.size + ' bytes' : 'Unknown'}</p>
                 <p><strong>Version:</strong> ${details.version !== undefined ? details.version : 'Unknown'}</p>
             `;
         } else if (node.type === 'keyimage') {
@@ -495,22 +531,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h5>Key Image Details</h5>
                 <p><strong>Key Image:</strong> ${node.key_image || 'Unknown'}</p>
                 <p><strong>Input Index:</strong> ${node.input_index !== undefined ? node.input_index : 'Unknown'}</p>
-                <p><strong>This represents one of the inputs being spent in this transaction.</strong></p>
+                
             `;
         } else if (node.type === 'ring_member') {
-            
-            /*txDetails.innerHTML = `
-                <h5>Ring Member</h5>
-                <p><strong>Position:</strong> ${node.position || 'Unknown'}</p>
-                <p><strong>Output offset:</strong> ${node.absolute_offset || 'Unknown'}</p>
-                <p class="text-muted">This is a potential input source in the ring signature.</p>
-                <p class="text-muted">Only one member of the ring is the real input being spent.</p>
-            `;
-            */
             const info = node.ring_output_info;
             const ageDays =
                 node.age_days !== null && node.age_days !== undefined
-                ? Number(node.age_days).toFixed(2)   // <-- force 2 decimals
+                ? Number(node.age_days).toFixed(2)  
                 : 'Unknown'
 
             txDetails.innerHTML = `
@@ -524,10 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p><strong>Output key:</strong> ${info.key  || 'Unknown'}</p>
                 ` : `<p>No ring metadata available.</p>`}
                 
-                <p><strong>Spend height:</strong> ${node.spend_height ?? 'Unknown'}</p>
-                <p><strong>Age (blocks):</strong> ${node.age_blocks ?? 'Unknown'}</p>
-                <p><strong>Age (days):</strong> ${ageDays}</p>
-
+                
                 <p class="text-muted">Potential ring member.</p>
             `;
         } else if (node.type === 'output') {
