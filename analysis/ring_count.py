@@ -74,7 +74,7 @@ def analyze(count=200):
                 log(f"Ring has {len(abs_offsets)} decoys")
 
                 if len(abs_offsets) == 0:
-                    log("    ❌ absolute_offsets EMPTY; skipping.")
+                    log("absolute_offsets EMPTY; skipping.")
                     continue
 
                 for g in abs_offsets:
