@@ -1,557 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Monero Transaction Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <style>
-        /* Graph visualization styles */
-        .node circle {
-            stroke: #fff;
-            stroke-width: 1.5px;
-        }
-        .node text {
-            pointer-events: none;
-            font-size: 10px;
-        }
-        .link {
-            stroke: #999;
-            stroke-opacity: 0.6;
-        }
-        #graph-view {
-            height: 600px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-            display: none;
-        }
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 3px;
-            padding: 8px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        .legend {
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #fff;
-        }
-        .legend-item {
-            display: inline-block;
-            margin-right: 15px;
-        }
-        .legend-color {
-            display: inline-block;
-            width: 15px;
-            height: 15px;
-            margin-right: 5px;
-            border-radius: 50%;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Visualization - ShadowX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
 </head>
 <body>
-    <div class="container mt-4">
-        <h2>Monero Transaction Details</h2>
-        
-        <!-- View toggle buttons -->
-        <div class="btn-group mb-3" role="group">
-            <button id="details-view-btn" class="btn btn-primary active">Details View</button>
-            <button id="graph-view-btn" class="btn btn-outline-primary">Graph View</button>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar col-lg-2">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
+                <div class="sidebar-brand-text mx-3">ShadowX</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-fw fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <hr class="sidebar-divider">
+                <div class="sidebar-heading">Interface</div>
+                <li class="nav-item">
+                    <a class="nav-link" href="/visual">
+                        <i class="fas fa-fw fa-chart-area"></i>
+                        <span>Visualization</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Custom Components</span>
+                    </a>
+                </li>
+                <hr class="sidebar-divider">
+                <li class="nav-item">
+                    <a class="nav-link" href="/charts">
+                        <i class="fas fa-fw fa-chart-line"></i>
+                        <span>Charts</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/tables">
+                        <i class="fas fa-fw fa-table"></i>
+                        <span>Tables</span>
+                    </a>
+                </li>
+            </ul>
         </div>
-        
-        <!-- Details View - Your existing content -->
-        <div id="details-view">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h4>Transaction: {{ transaction.tx_hash }}</h4>
+
+        <!-- Content Wrapper -->
+        <div class="content col-lg-10">
+            <!-- Main Content -->
+            <div class="container-fluid">
+                <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                    <h1 class="h3 mb-0 text-gray-800">Transaction Visualization</h1>
                 </div>
-                <div class="card-body">
-                    <h5>General Information</h5>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th width="200">Transaction Hash:</th>
-                            <td>{{ transaction.tx_hash }}</td>
-                        </tr>
-                        <tr>
-                            <th>Block Height:</th>
-                            <td>{{ transaction.block_height }}</td>
-                        </tr>
-                        <tr>
-                            <th>Block Timestamp:</th>
-                            <td>{{ transaction.block_timestamp|timestamp_format }}</td>
-                        </tr>
-                        <tr>
-                            <th>Confirmations:</th>
-                            <td>{{ transaction.confirmations }}</td>
-                        </tr>
-                        <tr>
-                            <th>In Pool:</th>
-                            <td>{{ "Yes" if transaction.in_pool else "No" }}</td>
-                        </tr>
-                        {% if transaction.tx_json and transaction.tx_json.rct_signatures and transaction.tx_json.rct_signatures.txnFee %}
-                        <tr>
-                            <th>Fee:</th>
-                            <td>{{ transaction.tx_json.rct_signatures.txnFee|xmr_amount }} XMR</td>
-                        </tr>
-                        {% endif %}
-                    </table>
-                    
-                    <h5 class="mt-4">Inputs ({{ transaction.tx_json.vin|length if transaction.tx_json and transaction.tx_json.vin else 0 }})</h5>
-                    {% if transaction.tx_json and transaction.tx_json.vin %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Key Image</th>
-                                        <th>Ring Size</th>
-                                        <th>Key Offsets</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {% for input in transaction.tx_json.vin %}
-                                    {% if input.key %}
-                                    <tr>
-                                        <td>{{ input.key.k_image }}</td>
-                                        <td>{{ input.key.key_offsets|length }}</td>
-                                        <td>{{ input.key.key_offsets|join(", ") }}</td>
-                                    </tr>
-                                    {% endif %}
-                                {% endfor %}
-                                </tbody>
-                            </table>
+
+                <div class="row">
+                    <div class="col-xl-8 col-lg-7">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Monero Transaction Graph</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="controls-panel">
+                                    <button class="btn btn-primary btn-sm" id="refreshData">
+                                        <i class="fas fa-sync-alt fa-sm"></i> Refresh Data
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="exportSvg">
+                                        <i class="fas fa-download fa-sm"></i> Export as SVG
+                                    </button>
+                                    <button class="btn btn-info btn-sm" id="resetView">
+                                        <i class="fas fa-undo fa-sm"></i> Reset View
+                                    </button>
+                                </div>
+                                <div class="graph-container" id="transactionGraph">
+                                    <!-- Graph will be rendered here -->
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <div class="alert alert-info">No input data available</div>
-                    {% endif %}
-                    
-                    <h5 class="mt-4">Outputs ({{ transaction.tx_json.vout|length if transaction.tx_json and transaction.tx_json.vout else 0 }})</h5>
-                    {% if transaction.tx_json and transaction.tx_json.vout %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Amount</th>
-                                        <th>Key</th>
-                                        {% if transaction.tx_json.vout[0].target and transaction.tx_json.vout[0].target.tagged_key %}
-                                        <th>View Tag</th>
-                                        {% endif %}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {% for output in transaction.tx_json.vout %}
-                                    <tr>
-                                        <td>{{ output.amount|xmr_amount }} XMR</td>
-                                        {% if output.target and output.target.key %}
-                                        <td>{{ output.target.key }}</td>
-                                        {% elif output.target and output.target.tagged_key %}
-                                        <td>{{ output.target.tagged_key.key }}</td>
-                                        <td>{{ output.target.tagged_key.view_tag }}</td>
-                                        {% endif %}
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                    </div>
+
+                    <div class="col-xl-4 col-lg-5">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Transaction Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="transaction-details" id="txDetails">
+                                    <p class="text-center">Select a transaction node to view details.</p>
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <div class="alert alert-info">No output data available</div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
-            
-            <!-- Optional Raw JSON section -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Raw Transaction Data</h5>
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; ShadowX 2025</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <pre><code>{{ transaction|tojson(indent=2) }}</code></pre>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Graph View -->
-        <div id="graph-view">
-            <div id="graph-info" class="alert alert-info mb-3">
-                Loading graph data...
-            </div>
-            
-            <div id="graph-container" style="height: 500px;"></div>
-            
-            <div class="legend mt-3">
-                <div class="legend-item"><span class="legend-color" style="background-color: #1f77b4;"></span> Block</div>
-                <div class="legend-item"><span class="legend-color" style="background-color: #ff7f0e;"></span> Transaction</div>
-                <div class="legend-item"><span class="legend-color" style="background-color: #2ca02c;"></span> Input</div>
-                <div class="legend-item"><span class="legend-color" style="background-color: #d62728;"></span> Output</div>
-                <div class="legend-item"><span class="legend-color" style="background-color: #9467bd;"></span> Ring Member</div>
-            </div>
-            
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5>Node Details</h5>
-                </div>
-                <div class="card-body" id="node-details">
-                    Click on a node to see details
-                </div>
-            </div>
+            </footer>
         </div>
     </div>
-    
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script>
-        // View toggle functionality
-        document.getElementById('details-view-btn').addEventListener('click', function() {
-            document.getElementById('details-view').style.display = 'block';
-            document.getElementById('graph-view').style.display = 'none';
-            this.classList.add('btn-primary');
-            this.classList.remove('btn-outline-primary');
-            document.getElementById('graph-view-btn').classList.add('btn-outline-primary');
-            document.getElementById('graph-view-btn').classList.remove('btn-primary');
-        });
-        
-        document.getElementById('graph-view-btn').addEventListener('click', function() {
-            document.getElementById('details-view').style.display = 'none';
-            document.getElementById('graph-view').style.display = 'block';
-            this.classList.add('btn-primary');
-            this.classList.remove('btn-outline-primary');
-            document.getElementById('details-view-btn').classList.add('btn-outline-primary');
-            document.getElementById('details-view-btn').classList.remove('btn-primary');
-            
-            // Load graph data when switching to graph view
-            loadTransactionGraph();
-        });
-        
-        // Global variables
-        let svg;
-        let simulation;
-        let tooltip;
-        
-        function loadTransactionGraph() {
-            const txHash = "{{ transaction.tx_hash }}";
-            const graphInfo = document.getElementById('graph-info');
-            
-            graphInfo.style.display = 'block';
-            graphInfo.textContent = 'Loading transaction graph data...';
-            
-            fetch(`/api/graph/transaction/${txHash}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.error) {
-                        graphInfo.textContent = `Error: ${data.error}`;
-                        graphInfo.className = 'alert alert-danger';
-                    } else {
-                        graphInfo.style.display = 'none';
-                        renderGraph(data);
-                    }
-                })
-                .catch(error => {
-                    console.error("Error loading graph data:", error);
-                    graphInfo.textContent = `Error: ${error.message}`;
-                    graphInfo.className = 'alert alert-danger';
-                });
-        }
-        
-        function renderGraph(data) {
-            // Clear previous graph
-            document.getElementById('graph-container').innerHTML = '';
-            
-            const container = document.getElementById('graph-container');
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            
-            // Create tooltip
-            if (!tooltip) {
-                tooltip = d3.select("body").append("div")
-                    .attr("class", "tooltip")
-                    .style("opacity", 0);
-            }
-            
-            // Create SVG
-            svg = d3.select("#graph-container")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height);
-            
-            // Create zoom behavior
-            const g = svg.append("g");
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 5])
-                .on("zoom", (event) => {
-                    g.attr("transform", event.transform);
-                });
-            
-            svg.call(zoom);
-            
-            // Define node colors by type
-            const nodeColors = {
-                'block': '#1f77b4',
-                'transaction': '#ff7f0e',
-                'input': '#2ca02c',
-                'output': '#d62728',
-                'ring_member': '#9467bd'
-            };
-            
-            // Create links
-            const link = g.append("g")
-                .attr("class", "links")
-                .selectAll("line")
-                .data(data.links)
-                .enter().append("line")
-                .attr("class", "link")
-                .attr("stroke-width", d => d.type === "contains" ? 2 : 1);
-            
-            // Create nodes
-            const node = g.append("g")
-                .attr("class", "nodes")
-                .selectAll(".node")
-                .data(data.nodes)
-                .enter().append("g")
-                .attr("class", "node")
-                .on("mouseover", showTooltip)
-                .on("mouseout", hideTooltip)
-                .on("click", showNodeDetails)
-                .call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
-            
-            // Add circles to nodes
-            node.append("circle")
-                .attr("r", d => {
-                    if (d.type === 'block') return 12;
-                    if (d.type === 'transaction') return 10;
-                    return 6;
-                })
-                .attr("fill", d => nodeColors[d.type] || "#999");
-            
-            // Add labels to nodes
-            node.append("text")
-                .attr("dx", 12)
-                .attr("dy", ".35em")
-                .text(d => {
-                    if (d.type === 'transaction') return d.id.substring(0, 8) + "...";
-                    if (d.type === 'block') return "Block " + d.id;
-                    return "";
-                });
-            
-            // Set up force simulation
-            simulation = d3.forceSimulation(data.nodes)
-                .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
-                .force("charge", d3.forceManyBody().strength(-300))
-                .force("center", d3.forceCenter(width / 2, height / 2))
-                .force("x", d3.forceX(width / 2).strength(0.05))
-                .force("y", d3.forceY(height / 2).strength(0.05));
-            
-            // Update positions on tick
-            simulation.on("tick", () => {
-                link
-                    .attr("x1", d => d.source.x)
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y);
-                
-                node
-                    .attr("transform", d => `translate(${d.x},${d.y})`);
-            });
-            
-            // Center the view
-            svg.transition().duration(750).call(
-                zoom.transform,
-                d3.zoomIdentity.translate(width/2, height/2).scale(0.7)
-            );
-        }
-        
-        function showTooltip(event, d) {
-            let text = "";
-            if (d.type === "transaction") {
-                text = `Transaction: ${d.id.substring(0, 12)}...`;
-            } else if (d.type === "block") {
-                text = `Block: ${d.id}`;
-            } else if (d.type === "input") {
-                text = `Input: ${d.id.substring(0, 12)}...`;
-            } else if (d.type === "output") {
-                const amount = d.data && d.data.amount ? (d.data.amount / 1e12).toFixed(12) : "?";
-                text = `Output: ${amount} XMR`;
-            } else if (d.type === "ring_member") {
-                text = `Ring Member: Offset ${d.data.offset}`;
-            }
-            
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", .9);
-            
-            tooltip.html(text)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        }
-        
-        function hideTooltip() {
-            tooltip.transition()
-                .duration(500)
-                .style("opacity", 0);
-        }
-        
-        function showNodeDetails(event, d) {
-            const detailsDiv = document.getElementById('node-details');
-            
-            let html = "";
-            if (d.type === "transaction") {
-                html = `
-                    <h5>Transaction Details</h5>
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Hash:</th>
-                            <td>${d.id}</td>
-                        </tr>
-                `;
-                
-                if (d.data && d.data.block_height) {
-                    html += `
-                        <tr>
-                            <th>Block Height:</th>
-                            <td>${d.data.block_height}</td>
-                        </tr>
-                    `;
-                }
-                
-                if (d.data && d.data.tx_json && d.data.tx_json.rct_signatures && d.data.tx_json.rct_signatures.txnFee) {
-                    const fee = d.data.tx_json.rct_signatures.txnFee / 1e12;
-                    html += `
-                        <tr>
-                            <th>Fee:</th>
-                            <td>${fee.toFixed(12)} XMR</td>
-                        </tr>
-                    `;
-                }
-                
-                html += `</table>`;
-            } else if (d.type === "block") {
-                html = `
-                    <h5>Block Details</h5>
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Height:</th>
-                            <td>${d.id}</td>
-                        </tr>
-                `;
-                
-                if (d.data && d.data.block_header) {
-                    html += `
-                        <tr>
-                            <th>Hash:</th>
-                            <td>${d.data.hash || "Unknown"}</td>
-                        </tr>
-                    `;
-                    if (d.data.block_header.timestamp_formatted) {
-                        html += `
-                            <tr>
-                                <th>Timestamp:</th>
-                                <td>${d.data.block_header.timestamp_formatted}</td>
-                            </tr>
-                        `;
-                    }
-                    html += `
-                        <tr>
-                            <th>Difficulty:</th>
-                            <td>${d.data.difficulty || "Unknown"}</td>
-                        </tr>
-                    `;
-                }
-                
-                html += `</table>`;
-            } else if (d.type === "input") {
-                html = `
-                    <h5>Input Details</h5>
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Key Image:</th>
-                            <td>${d.data.key.k_image}</td>
-                        </tr>
-                        <tr>
-                            <th>Ring Size:</th>
-                            <td>${d.data.key.key_offsets.length}</td>
-                        </tr>
-                    </table>
-                `;
-            } else if (d.type === "output") {
-                const amount = d.data.amount ? (d.data.amount / 1e12).toFixed(12) : "Unknown";
-                html = `
-                    <h5>Output Details</h5>
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Amount:</th>
-                            <td>${amount} XMR</td>
-                        </tr>
-                        <tr>
-                            <th>Key:</th>
-                            <td>${d.data.key}</td>
-                        </tr>
-                    </table>
-                `;
-            } else if (d.type === "ring_member") {
-                html = `
-                    <h5>Ring Member Details</h5>
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Offset:</th>
-                            <td>${d.data.offset}</td>
-                        </tr>
-                        <tr>
-                            <th>Key Image:</th>
-                            <td>${d.data.key_image}</td>
-                        </tr>
-                    </table>
-                `;
-            } else {
-                html = `<p>No details available for this node type</p>`;
-            }
-            
-            detailsDiv.innerHTML = html;
-        }
-        
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-        
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
-        
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
 
-        // Define variables from template data at the top of your script
-        const transactionHash = "{{ transaction.tx_hash or '' }}";
-        const autoShowGraph = "{{ 'true' if auto_show_graph else 'false' }}";
-        
-        // Later in your document.addEventListener code
-        document.addEventListener('DOMContentLoaded', function() {
-            if (autoShowGraph) {
-                // Automatically switch to graph view
-                document.getElementById('graph-view-btn').click();
-                
-                // If there's a transaction hash available, load its graph
-                if (transactionHash) {
-                    loadGraphData(transactionHash);
-                }
-            }
-        });
-    </script>
+    <!-- Core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/transaction-graph.js') }}"></script>
 </body>
 </html>

@@ -9,10 +9,10 @@ Transactional details:
 Spending tx:  f80e7aff7adf7158eecdabdee772151ce4f08373ccfa9c5c27e6dd5fe73fcdad
 Input:        vin[0]
 Ring member:  position 0
-Global index: 9626785
+Global index: 9626785 (Identifier for Monero's global list of RingCT outputs and to map the origin block height)
 Origin txid:  77166fcd97785256081654bbae10db36eab4d2ff005da88b3c573451fbd7e0b4
 Origin vout:  0
-Origin height:1982157
+Origin height:1982157 (block height where the output was created)
 Key:          3693ad23e6404edef7730315eaef9d2e09bdf95afb9ca6779adb293f88ae4012  
 Commitment:   6cfc9403ce42c43def1d29fcadee6315d82576ec9c9b0d9d9843b10a69fd4c06 (outPk Field from get/transactions must be = the mask in get/outs)
 age block:    1,990,415 (spend height) - 1,982,157 (origin height) = 8,258 
