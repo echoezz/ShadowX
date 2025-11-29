@@ -371,6 +371,45 @@
                         <div class="col-xl-8 col-lg-7">
 
                             <!-- Area Chart -->
+                             <!-- Gamma PDF for Single TXID -->
+                            <div class="card shadow mb-4" style="width:100%;">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        Gamma PDF / Triangular PDF (Per Transaction)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p>Enter TXID:</p>
+                                    <input id="txidInput" type="text" class="form-control mb-3" placeholder="Paste txid here">
+                                    <div class="form-group">
+                                        <button class="btn btn-secondary mb-3" onclick="loadInputIndexesClicked()">
+                                            Load Inputs
+                                        </button>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="inputIndexSelect" class="font-weight-bold">Select Input (Key Image):</label>
+                                        <select id="inputIndexSelect" class="form-control mb-3"></select>
+                                    </div>
+
+
+                                    <button class="btn btn-primary mb-3" onclick="loadTxGamma()">Generate Graph</button>
+                                    <div id="realSpendBanner" 
+                                        class="alert alert-info mb-3" 
+                                        style="display:none;">
+                                    </div>
+
+                                    <div class="chart-area">
+                                        <canvas id="gammaTxChart" style="height:400px; width:100%;"></canvas>
+                                    </div>
+
+                                    <div class="chart-area mt-4">
+                                        <canvas id="ratioChart" style="height:300px; width:100%;"></canvas>
+                                    </div>
+
+                                </div>
+                            </div>
+
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
                                     <h6 class="m-0 font-weight-bold text-primary">Area Chart</h6>
@@ -485,6 +524,217 @@
     <script src="/static/js/demo/chart-area-demo.js"></script>
     <script src="/static/js/demo/chart-pie-demo.js"></script>
     <script src="/static/js/demo/chart-bar-demo.js"></script>
+    <script>
+    async function loadInputIndexesClicked() {
+        const txid = document.getElementById("txidInput").value.trim().toLowerCase();
+        if (!txid) {
+            alert("Please enter TXID");
+            return;
+        }
+        await loadInputIndexes(txid);
+    }
+
+    // dynamic dropdown box
+    async function loadInputIndexes(txid) {
+        const res = await fetch(`/api/transaction/${txid}`);
+        const data = await res.json();
+        console.log("Transaction API Response:", data);
+
+        if (data.error) {
+            alert("Could not fetch transaction data.");
+            return;
+        }
+
+        const count = data.ring_signatures.length;
+        const dropdown = document.getElementById("inputIndexSelect");
+
+        dropdown.innerHTML = "";  // clear old options
+
+        for (let i = 0; i < count; i++) {
+            const keyImage = data.ring_signatures[i].key_image || "unknown";
+            const opt = document.createElement("option");
+            opt.value = i;
+            opt.textContent = `Input ${i} — ${keyImage.substring(0, 12)}…`;
+            dropdown.appendChild(opt);
+        }
+    }
+
+    async function loadTxGamma() {
+
+        const txid = document.getElementById("txidInput").value.trim().toLowerCase();
+        if (!txid) {
+            alert("Please enter a TXID");
+            return;
+        }
+
+
+        // Fetch PDF data from backend
+        const index = document.getElementById("inputIndexSelect").value;
+        const res = await fetch(`/api/gamma-tx/${txid}?input_index=${index}`);
+
+        const data = await res.json();
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        // === SCALE DS & DM VALUES FOR VISIBILITY ===
+        const SCALE = 1e12;
+        const scaledDS = data.DS.map(v => v * SCALE);
+        const scaledDM = data.DM.map(v => v * SCALE);
+
+        // === NORMALIZE BOTH CURVES ===
+        const maxVal = Math.max(
+            ...scaledDS,
+            ...scaledDM
+        );
+
+        const normDS = scaledDS.map(v => v / maxVal);
+        const normDM = scaledDM.map(v => v / maxVal);
+
+        // === DS / DM RATIO ===
+        const ratio = data.positions.map((p, i) => {
+            if (normDM[i] === 0) return 0;  // avoid divide-by-zero
+            return normDS[i] / normDM[i];
+        });
+
+        // === FIND MOST LIKELY REAL SPEND ===
+        let maxRatio = -Infinity;
+        let maxIndex = -1;
+
+        ratio.forEach((v, i) => {
+            if (v > maxRatio) {
+                maxRatio = v;
+                maxIndex = i;
+            }
+        });
+
+        // Normalize confidence: ratio / sum of all ratios
+        const ratioSum = ratio.reduce((a, b) => a + b, 0);
+        const confidence = ratioSum > 0 ? (maxRatio / ratioSum) : 0;
+
+        // Update banner
+        const banner = document.getElementById("realSpendBanner");
+        banner.style.display = "block";
+        banner.innerHTML = `
+            <strong>Most likely real spend index:</strong> ${maxIndex}<br>
+            <strong>Confidence:</strong> ${(confidence * 100).toFixed(1)}%
+        `;
+
+
+
+        const ctx = document.getElementById("gammaTxChart").getContext("2d");
+
+        // Destroy any previous chart
+        if (window.gammaChart) {
+            window.gammaChart.destroy();
+        }
+
+        // Correct Chart.js implementation using (x,y) pairs
+        window.gammaChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                datasets: [
+                    {
+                        label: "Gamma PDF (DS)",
+                        borderColor: "red",
+                        borderWidth: 2,
+                        fill: false,
+                        data: data.positions.map((p, i) => ({
+                            x: p,
+                            y: normDS[i]
+                        }))
+                    },
+                    {
+                        label: "Triangular PDF (DM)",
+                        borderColor: "blue",
+                        borderWidth: 2,
+                        fill: false,
+                        data: data.positions.map((p, i) => ({
+                            x: p,
+                            y: normDM[i]
+                        }))
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: "linear",
+                        position: "bottom",
+                        title: {
+                            display: true,
+                            text: "Ring Position"
+                        },
+                        min: 0,
+                        max: data.positions.length - 1,
+                        ticks: {
+                            display: true,
+                            autoSkip: false,
+                            stepSize: 1,
+                            callback: value => value
+                        }
+                    },
+
+                    y: {
+                        type: "logarithmic",
+                        title: {
+                            display: true,
+                            text: "PDF Value (log scale)"
+                        },
+                    }
+
+                }
+            }
+        });
+        // Destroy previous ratio chart
+        if (window.ratioPlot) window.ratioPlot.destroy();
+
+        const ratioCtx = document.getElementById("ratioChart").getContext("2d");
+
+        window.ratioPlot = new Chart(ratioCtx, {
+            type: "line",
+            data: {
+                labels: data.positions,
+                datasets: [
+                    {
+                        label: "DS / DM Ratio",
+                        borderColor: "purple",
+                        borderWidth: 2,
+                        fill: false,
+                        data: ratio
+                    },
+                    {
+                        label: "Most Likely Real Spend",
+                        pointRadius: 6,
+                        pointBackgroundColor: "red",
+                        showLine: false,
+                        data: ratio.map((v, i) => i === maxIndex ? v : null)
+                    }
+                ]
+
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: { display: true, text: "Ring Position" }
+                    },
+                    y: {
+                        title: { display: true, text: "DS / DM Ratio" },
+                        type: "linear"
+                    }
+                }
+            }
+        });
+
+    }
+    </script>
+
+
 
 </body>
 
