@@ -4,8 +4,8 @@
 </p>
 
 ## Using the tool:
-- Currently, this tool is only tested and used in Kali Environment only
-- After cloning, renamed the main folder to "ShadowX", then place the folder inside Kali Directory (/kali/ShadowX)
+- Currently, this tool is only tested and used in Linux Environment only
+- After cloning, renamed the main folder to "ShadowX", then place the folder inside in your user home Directory (/home/kali/ShadowX)
 
 
 - The folder structure will be like this:
