@@ -21,7 +21,7 @@ ShadowX/
 ```
 
 - You need to create the folders uploadedFiles, stagenet and lmdb. They are not on github because they are empty by nature, thus github do not publish empty directories
-- The tool assumes you have a hold on the data.mdb file for analysis. After starting the web app (app.py) at localhost:5000, proceed to upload the data.mdb file
+- The tool assumes you have a hold on the data.mdb file for analysis. After starting the web app (app.py) at localhost:5000, proceed to upload the data.mdb file at the index page
 - When successfully uploaded, the data.mdb file will be stored inside lmdb folder (uploadedFiles > stagenet > lmdb)
 
 - Once uploaded successful, start the monero stagenet service, the monero files will be auto generated and be created inside the stagenet folder. A lock.mdb will also be created inside the lmdb folder. (where your uploaded data.mdb is stored)
