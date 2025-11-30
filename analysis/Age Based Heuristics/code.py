@@ -21,23 +21,22 @@ ages = [
     0.34, 0.31, 0.15, 0.12
 ]
 
-# -----------------------------
-# SILENT FUNCTIONS
-# -----------------------------
+
+# Gamma PDF function
 def gamma_pdf(x, k, theta):
     """Silent Gamma PDF (used in probability calculations)."""
     return float((x**(k-1) * mp.e**(-x/theta)) / (mp.gamma(k) * theta**k))
 
 # Until Early 2017, Monero utilized a triangular decoy distribution to select decoy ages
+# triangular DM function
 def dm_triangular(x, T):
     """Silent triangular PDF (old Monero decoy sampling)."""
     if x < 0 or x > T:
         return 0
     return 2 * (T - x) / (T * T)
 
-# -----------------------------
-# VERBOSE FUNCTIONS
-# -----------------------------
+# A more verbose version for gamma PDF computation
+
 def gamma_pdf_verbose(x, k, theta):
     print("\n=== Gamma PDF Computation ===")
     print(f"x = {x}")
@@ -87,11 +86,10 @@ def dm_triangular_verbose(x, T):
 
     return dm
 
-# -----------------------------
 # COMPUTE DS, DM, RATIOS, PROBABILITIES
-# -----------------------------
-DS = [gamma_pdf(a, k, theta) for a in ages]   # silent version
-DM = [dm_triangular(a, T) for a in ages]
+
+DS = [gamma_pdf(a, k, theta) for a in ages]   # Call Gamma PDF function
+DM = [dm_triangular(a, T) for a in ages]    # Call Triangular DM function
 
 ratios = [ds / dm for ds, dm in zip(DS, DM)]   # temporal attack
 total_ratio = sum(ratios)
@@ -113,9 +111,8 @@ df = pd.DataFrame({
 pd.set_option('display.float_format', lambda x: f"{x:.12e}")
 print(df)
 
-# -----------------------------
-# PLOT 1: DS vs DM
-# -----------------------------
+# Graph 1: DS vs DM
+
 plt.figure(figsize=(8,5))
 plt.plot(ages, DS, marker='o', label='DS (Gamma)')
 plt.plot(ages, DM, marker='x', label='DM (Triangular)')
@@ -126,9 +123,8 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-# -----------------------------
-# PLOT 2: DS/DM Ratio
-# -----------------------------
+# Graph 2: DS/DM Ratio
+
 plt.figure(figsize=(8,5))
 plt.plot(ages, ratios, marker='o', color='orange')
 plt.xlabel("Age (days)")
@@ -137,9 +133,9 @@ plt.title("DS/DM Ratio per Ring Member")
 plt.grid(True)
 plt.show()
 
-# -----------------------------
-# PLOT 3: Old vs Modern Monero Probabilities
-# -----------------------------
+
+# Graph 3: Old vs Modern Monero Probabilities
+
 plt.figure(figsize=(8,5))
 plt.plot(range(16), P_old, marker='o', label='OLD (2017) P(real)')
 plt.plot(range(16), P_new, marker='x', label='MODERN (2025) P(real)')
