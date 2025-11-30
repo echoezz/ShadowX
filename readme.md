@@ -1,4 +1,7 @@
 ### ShadowX - A Monero Analysis Web Tool
+<p align="center">
+  <img src="img/ShadowX.png" width="500" alt="ShadowX">
+</p>
 
 ## Using the tool:
 - Currently, this tool is only tested and used in Kali Environment only
