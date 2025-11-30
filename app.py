@@ -16,9 +16,11 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Configure OS-appropriate paths for temporary file storage
 if platform.system() == "Windows":
-    app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploadedFiles")
+    print("Doesn't support Windows currently")
 else:
-    app.config["UPLOAD_FOLDER"] = "/home/kali/ShadowX/uploadedFiles"
+    #linux
+    app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploadedFiles")
+    MONEROD_PATH = os.path.join(os.getcwd(), "monero-x86_64-linux-gnu-v0.18.4.4", "monerod")
 
 # Make sure the upload folder exists
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -71,7 +73,7 @@ def start_monerod(base_dir, rpc_port=38081):
     """
     try:
         # monerod path
-        monerod_path = "/home/kali/ShadowX/monero-x86_64-linux-gnu-v0.18.4.4/monerod"
+        monerod_path = MONEROD_PATH
 
         # Build the monerod command
         command = [
