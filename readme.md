@@ -15,12 +15,11 @@ ShadowX/
 ├── uploadedFiles/
     ├── stagenet
         ├── lmdb
-├── .venv/
 ├── static/
-├── experimental/
+├── analysis/
 ├── monero-x86_64-linux-gnu-v0.18.4.4/
 ├── app.py
-└── requirements.txt
+├── img/
 ```
 
 - You need to create the folders uploadedFiles, stagenet and lmdb. They are not on github because they are empty by nature, thus github do not publish empty directories
