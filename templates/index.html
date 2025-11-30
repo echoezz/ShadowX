@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>ShadowX - A Monero Analysis Tool</title>
+    <title>ShadowX - A Monero Analysis Web Tool</title>
 
     <!-- Custom fonts for this template-->
     <link href="/static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -491,7 +491,6 @@
             
             const statusElement = document.getElementById("start-status");
             try {
-                // statusElement.innerText = "Starting service, please wait...";
                 if (statusElement) {
                     statusElement.innerText = "Starting service, please wait...";
                 }
@@ -611,6 +610,7 @@
                 const xhr = new XMLHttpRequest();
                 xhr.open("POST", url);
 
+                // the progress bar to let user know its processing
                 xhr.upload.onprogress = (event) => {
                     if (event.lengthComputable) {
                         const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -726,7 +726,7 @@
             }
             
             try {
-                // Change this URL to your Flask endpoint
+                // URL to point to our Flask endpoint
                 const response = await fetch('/get-transactions', {
                     method: 'POST',
                     headers: {

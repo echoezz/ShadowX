@@ -189,6 +189,7 @@ def upload():
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
 
+    # allowing only mdb files for upload
     ALLOWED_EXTENSIONS = {"mdb"}
     if not file.filename.split(".")[-1].lower() in ALLOWED_EXTENSIONS:
         return jsonify({"error": "Invalid file type. Only .mdb files are allowed."}), 400
@@ -290,7 +291,7 @@ def api_get_transaction(tx_hash):
         if tx_hash.startswith('tx_'):
             tx_hash = tx_hash[3:]
         
-        # Use the exact format that works in your curl command
+        # Use the exact format that works in the curl command
         rpc_url = f"http://127.0.0.1:{monerod_process_data['rpc_port']}/get_transactions"
         payload = {
             "txs_hashes": [tx_hash],
